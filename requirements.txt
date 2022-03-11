@@ -1,0 +1,5 @@
+pre-commit
+cmakelang[YAML]
+cpplint
+pylint
+black
