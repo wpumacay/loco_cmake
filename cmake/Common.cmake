@@ -5,15 +5,19 @@
 
 # Helper logging function, similar to `message`, with additional info regarding
 # the current project (in the scope in which it's called)
-function(RbMessage param_message)
-  cmake_parse_arguments(RB_PRINT "" "LOG_LEVEL" "" ${ARGN})
+function(loco_message param_message)
+  set(options) # Not used in this function
+  set(one_value_args "LOG_LEVEL")
+  set(multi_value_args) # Not used in this function
+  cmake_parse_arguments(RB_PRINT "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
 
-  # Use a dummy name in case in a non-project scope
+  # Use a dummy name in case no local project-scope has been set
   if(NOT PROJECT_NAME)
     set(PROJECT_NAME "")
   endif()
 
-  # Use STATUS as default log-level, unless given by the user
+  # Use STATUS as default log-level, unless otherwise given by the user
   if(NOT RB_PRINT_LOG_LEVEL)
     set(RB_PRINT_LOG_LEVEL "STATUS")
   endif()
@@ -22,12 +26,13 @@ function(RbMessage param_message)
 endfunction()
 
 # Fetches and configures a dependency from a given Git repo
-macro(RbConfigureGitDependency)
+macro(loco_configure_git_dependency)
   set(options) # Not using options for this macro
   set(one_value_args TARGET REPO TAG BUILD_MODE DISCARD_UNLESS)
   set(multi_value_args BUILD_ARGS)
   cmake_parse_arguments(GIT_DEP "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
+
   # Check if the user passed the DISCARD_UNLESS argument (if not, set to TRUE)
   if(NOT DEFINED GIT_DEP_DISCARD_UNLESS)
     set(GIT_DEP_DISCARD_UNLESS TRUE)
@@ -69,9 +74,9 @@ macro(RbConfigureGitDependency)
 endmacro()
 
 # Helper function used to summarize all settings defined on a given target
-function(RbPrintTargetInfo param_target)
+function(loco_print_target_properties param_target)
   if(NOT TARGET ${param_target})
-    RbMessage("Must give a valid target to grab info from")
+    loco_message("Must give a valid target to grab info from")
     return()
   endif()
 
@@ -98,7 +103,8 @@ function(RbPrintTargetInfo param_target)
 endfunction()
 
 # Helper function used to summarize all settings setup by CMake on this project
-function(RbPrintGeneralInfo)
+function(loco_print_project_info)
+
   message("CMake settings information ----------------------------------------")
   message("Current project              : ${PROJECT_NAME}")
   message("Current project version      : ${PROJECT_VERSION}")
@@ -126,3 +132,45 @@ function(RbPrintGeneralInfo)
   endif()
   message("-------------------------------------------------------------------")
 endfunction()
+
+# Helper function used to check the OS of our host system
+macro(loco_print_host_info)
+
+  # -------------------------------------
+  # Grab all information possible from cmake_host_system_info and show it to the
+  # user (might help debugging platform-specific issues in the future)
+
+  cmake_host_system_information(RESULT os_name QUERY OS_NAME)
+  cmake_host_system_information(RESULT os_release QUERY OS_RELEASE)
+  cmake_host_system_information(RESULT os_version QUERY OS_VERSION)
+  cmake_host_system_information(RESULT os_platform QUERY OS_PLATFORM)
+  cmake_host_system_information(RESULT cpu_num_logical_cores
+                                QUERY NUMBER_OF_LOGICAL_CORES)
+  cmake_host_system_information(RESULT cpu_num_physical_cores
+                                QUERY NUMBER_OF_PHYSICAL_CORES)
+  cmake_host_system_information(RESULT cpu_is_64bit QUERY IS_64BIT)
+  cmake_host_system_information(RESULT cpu_processor_id
+                                QUERY PROCESSOR_SERIAL_NUMBER)
+  cmake_host_system_information(RESULT cpu_processor_name QUERY PROCESSOR_NAME)
+  cmake_host_system_information(RESULT cpu_processor_description
+                                QUERY PROCESSOR_DESCRIPTION)
+  cmake_host_system_information(RESULT total_physical_memory
+                                QUERY TOTAL_PHYSICAL_MEMORY)
+  cmake_host_system_information(RESULT available_physical_memory
+                                QUERY AVAILABLE_PHYSICAL_MEMORY)
+
+  message("Host properties ---------------------------------------------------")
+  message("OS name                      : ${os_name}")
+  message("OS sub-type                  : ${os_release}")
+  message("OS build-id                  : ${os_version}")
+  message("OS platform                  : ${os_platform}")
+  message("Number of logical cores      : ${cpu_num_logical_cores}")
+  message("Number of physical cores     : ${cpu_num_physical_cores}")
+  message("Is 64-bit                    : ${cpu_is_64bit}")
+  message("Processor's serial number    : ${cpu_processor_id}")
+  message("Processor's name             : ${cpu_processor_name}")
+  message("Processor's description      : ${cpu_processor_description}")
+  message("Total physical memory(MB)    : ${total_physical_memory}")
+  message("Available physical memory(MB): ${available_physical_memory}")
+  message("-------------------------------------------------------------------")
+endmacro()
