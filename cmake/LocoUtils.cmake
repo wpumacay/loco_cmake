@@ -1,15 +1,14 @@
 # ~~~
-# Commonly used helper functions and macros along various repositories I'm
-# currently working on
+# loco_message(<param_message>
+#       [LOG_LEVEL <log-level>])
+#
+# Printing helper used internally (keeps track of the current project scope)
 # ~~~
-
-# Helper logging function, similar to `message`, with additional info regarding
-# the current project (in the scope in which it's called)
-function(loco_message param_message)
-  set(options) # Not used in this function
+macro(loco_message param_message)
+  set(options)
   set(one_value_args "LOG_LEVEL")
-  set(multi_value_args) # Not used in this function
-  cmake_parse_arguments(RB_PRINT "${options}" "${one_value_args}"
+  set(multi_value_args)
+  cmake_parse_arguments(loco_msg "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
 
   # Use a dummy name in case no local project-scope has been set
@@ -18,14 +17,24 @@ function(loco_message param_message)
   endif()
 
   # Use STATUS as default log-level, unless otherwise given by the user
-  if(NOT RB_PRINT_LOG_LEVEL)
-    set(RB_PRINT_LOG_LEVEL "STATUS")
+  if(NOT loco_msg_LOG_LEVEL)
+    set(loco_msg_LOG_LEVEL "STATUS")
   endif()
 
-  message(${RB_PRINT_LOG_LEVEL} "[${PROJECT_NAME}] >>> ${param_message}")
-endfunction()
+  message(${loco_msg_LOG_LEVEL} "[${PROJECT_NAME}] >>> ${param_message}")
+endmacro()
 
-# Fetches and configures a dependency from a given Git repo
+# ~~~
+# loco_configure_git_dependency(
+#     [TARGET <target-name>]
+#     [REPO] <git-repo>
+#     [TAG] <tag|branch|commit-hash>
+#     [BUILD_MODE <build-type>])
+#
+# Fetches and configures a dependency from a given GIT repository. This assumes
+# that the given project uses CMake as build system generator (i.e. has a root
+# CMakeLists.txt file which gets invoked by add_subdirectory internally)
+# ~~~
 macro(loco_configure_git_dependency)
   set(options) # Not using options for this macro
   set(one_value_args TARGET REPO TAG BUILD_MODE DISCARD_UNLESS)
@@ -33,16 +42,24 @@ macro(loco_configure_git_dependency)
   cmake_parse_arguments(GIT_DEP "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
 
+  # -----------------------------------
   # Check if the user passed the DISCARD_UNLESS argument (if not, set to TRUE)
   if(NOT DEFINED GIT_DEP_DISCARD_UNLESS)
     set(GIT_DEP_DISCARD_UNLESS TRUE)
   endif()
 
-  # In case the user discard the dep. then stop (might not be required)
+  # -----------------------------------
+  # Process the request, unless the user wanted to discard it
   if(${GIT_DEP_DISCARD_UNLESS})
-    # cmake-format: off
+
+    # -----------------------------------
+    # Force FetchContent to show the progress of the git-clone command
     # cmake-lint: disable=C0103
+    # cmake-format: off
     set(FETCHCONTENT_QUIET FALSE CACHE INTERNAL "Show git-progress" FORCE)
+
+    # -----------------------------------
+    # Request at `configure time` the given GIT repository using FetchContent
     FetchContent_Declare(
           ${GIT_DEP_TARGET}
           GIT_REPOSITORY ${GIT_DEP_REPO}
@@ -69,14 +86,21 @@ macro(loco_configure_git_dependency)
                      ${GIT_DEP_BUILD_ARGS}
           BUILD_ALWAYS OFF)
     # cmake-format: on
+
+    # ---------------------------------
+    # Process the GIT repo (i.e. add_subdirectory)
     FetchContent_MakeAvailable(${GIT_DEP_TARGET})
   endif()
 endmacro()
 
-# Helper function used to summarize all settings defined on a given target
+# ~~~
+# loco_print_target_properties(<param_target>)
+#
+# Prints to stdout the properties/settings of the given target
+# ~~~
 function(loco_print_target_properties param_target)
   if(NOT TARGET ${param_target})
-    loco_message("Must give a valid target to grab info from")
+    loco_message("Must give a valid target to grab info from" LOG_LEVEL WARNING)
     return()
   endif()
 
@@ -95,6 +119,8 @@ function(loco_print_target_properties param_target)
                         COMPILE_DEFINITIONS)
   endif()
 
+  # -----------------------------------
+  # Print the information we could gather from the given target
   message("Target [${param_target}] information ------------------------------")
   message("Compile features             : ${VAR_COMPILE_FEATURES}")
   message("Compile options              : ${VAR_COMPILE_OPTIONS}")
@@ -102,8 +128,15 @@ function(loco_print_target_properties param_target)
   message("-------------------------------------------------------------------")
 endfunction()
 
-# Helper function used to summarize all settings setup by CMake on this project
+# ~~~
+# loco_print_project_info()
+#
+# Prints to stdout the properties of the current project
+# ~~~
 function(loco_print_project_info)
+
+  # -----------------------------------
+  # Print various CMake settings from the configuration of the current project
 
   message("CMake settings information ----------------------------------------")
   message("Current project              : ${PROJECT_NAME}")
@@ -133,7 +166,11 @@ function(loco_print_project_info)
   message("-------------------------------------------------------------------")
 endfunction()
 
-# Helper function used to check the OS of our host system
+# ~~~
+# loco_print_host_info()
+#
+# Prints to stdout the information of the current host
+# ~~~
 macro(loco_print_host_info)
 
   # -------------------------------------
