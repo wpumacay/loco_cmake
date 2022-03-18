@@ -16,7 +16,7 @@ project(
 
 # -------------------------------------
 # Set the path where our helper modules are located (right next to this folder)
-set(LOCO_CMAKE_CMAKE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(LOCO_CMAKE_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # -------------------------------------
 # Make sure to tell CMake to include our helper modules

@@ -120,6 +120,18 @@ function(loco_print_target_properties param_target)
   endif()
 
   # -----------------------------------
+  # Handle the cases in which the property could not be retrieved
+  if(NOT VAR_COMPILE_FEATURES)
+    set(VAR_COMPILE_FEATURES)
+  endif()
+  if(NOT VAR_COMPILE_OPTIONS)
+    set(VAR_COMPILE_OPTIONS)
+  endif()
+  if(NOT VAR_COMPILE_DEFINITIONS)
+    set(VAR_COMPILE_DEFINITIONS)
+  endif()
+
+  # -----------------------------------
   # Print the information we could gather from the given target
   message("Target [${param_target}] information ------------------------------")
   message("Compile features             : ${VAR_COMPILE_FEATURES}")
