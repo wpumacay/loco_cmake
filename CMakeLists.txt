@@ -24,8 +24,8 @@ list(APPEND CMAKE_MODULE_PATH "${LOCO_CMAKE_CMAKE_DIR}")
 
 # Include helper modules provided by this project
 include(LocoUtils)
-include(LocoSetCompilerFlags)
 include(LocoCheckSIMD)
+include(LocoSetCompilerFlags)
 include(LocoConfigureProject)
 
 # -------------------------------------

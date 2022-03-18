@@ -39,18 +39,18 @@ macro(loco_configure_git_dependency)
   set(options) # Not using options for this macro
   set(one_value_args TARGET REPO TAG BUILD_MODE DISCARD_UNLESS)
   set(multi_value_args BUILD_ARGS)
-  cmake_parse_arguments(GIT_DEP "${options}" "${one_value_args}"
+  cmake_parse_arguments(git_dep "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
 
   # -----------------------------------
   # Check if the user passed the DISCARD_UNLESS argument (if not, set to TRUE)
-  if(NOT DEFINED GIT_DEP_DISCARD_UNLESS)
-    set(GIT_DEP_DISCARD_UNLESS TRUE)
+  if(NOT DEFINED git_dep_DISCARD_UNLESS)
+    set(git_dep_DISCARD_UNLESS TRUE)
   endif()
 
   # -----------------------------------
   # Process the request, unless the user wanted to discard it
-  if(${GIT_DEP_DISCARD_UNLESS})
+  if(${git_dep_DISCARD_UNLESS})
 
     # -----------------------------------
     # Force FetchContent to show the progress of the git-clone command
@@ -61,19 +61,19 @@ macro(loco_configure_git_dependency)
     # -----------------------------------
     # Request at `configure time` the given GIT repository using FetchContent
     FetchContent_Declare(
-          ${GIT_DEP_TARGET}
-          GIT_REPOSITORY ${GIT_DEP_REPO}
-          GIT_TAG ${GIT_DEP_TAG}
+          ${git_dep_TARGET}
+          GIT_REPOSITORY ${git_dep_REPO}
+          GIT_TAG ${git_dep_TAG}
           GIT_PROGRESS TRUE
           GIT_SHALLOW TRUE
           USES_TERMINAL_DOWNLOAD TRUE
-          PREFIX "${CMAKE_SOURCE_DIR}/third_party/${GIT_DEP_TARGET}"
-          DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/third_party/${GIT_DEP_TARGET}"
-          SOURCE_DIR "${CMAKE_SOURCE_DIR}/third_party/${GIT_DEP_TARGET}/source"
-          BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/${GIT_DEP_TARGET}/build"
-          STAMP_DIR "${CMAKE_BINARY_DIR}/third_party/${GIT_DEP_TARGET}/stamp"
-          TMP_DIR "${CMAKE_BINARY_DIR}/third_party/${GIT_DEP_TARGET}/tmp"
-          CMAKE_ARGS -DCMAKE_BUILD_TYPE=${GIT_DEP_BUILD_MODE}
+          PREFIX "${CMAKE_SOURCE_DIR}/third_party/${git_dep_TARGET}"
+          DOWNLOAD_DIR "${CMAKE_SOURCE_DIR}/third_party/${git_dep_TARGET}"
+          SOURCE_DIR "${CMAKE_SOURCE_DIR}/third_party/${git_dep_TARGET}/source"
+          BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/build"
+          STAMP_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/stamp"
+          TMP_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/tmp"
+          CMAKE_ARGS -DCMAKE_BUILD_TYPE=${git_dep_BUILD_MODE}
                      -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
                      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -83,13 +83,13 @@ macro(loco_configure_git_dependency)
                      -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
                      -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
                      -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-                     ${GIT_DEP_BUILD_ARGS}
+                     ${git_dep_BUILD_ARGS}
           BUILD_ALWAYS OFF)
     # cmake-format: on
 
     # ---------------------------------
     # Process the GIT repo (i.e. add_subdirectory)
-    FetchContent_MakeAvailable(${GIT_DEP_TARGET})
+    FetchContent_MakeAvailable(${git_dep_TARGET})
   endif()
 endmacro()
 
