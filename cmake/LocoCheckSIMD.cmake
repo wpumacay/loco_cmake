@@ -13,6 +13,7 @@
 #   * Advanced Vector eXtensions (AVX): AVX, AVX2
 # ~~~
 function(loco_check_simd_support)
+  # cmake-lint: disable=R0915
   set(options)
   set(one_value_args RESULT FEATURE VERBOSE)
   set(multi_value_args)
@@ -32,6 +33,18 @@ function(loco_check_simd_support)
     loco_message("Must request a feature to this function, but none given"
                  LOG_LEVEL FATAL_ERROR)
   endif()
+
+  # -----------------------------------
+  # Check if we haven't cached the values of a previous try_run
+  if(LOCO_SIMD_HAS_CACHED_RESULTS)
+    loco_message(
+      "Getting cached SIMD feature [${simd_FEATURE}] from previous try_run")
+    loco_cache_get_simd_feature(simd_FEATURE simd_RESULT)
+    return()
+  endif()
+
+  # -----------------------------------
+  # If we don't have cached values, do the query using try_run to check for SIMD
 
   include(CheckCXXSourceCompiles)
   include(CheckCXXSymbolExists)
@@ -120,4 +133,79 @@ function(loco_check_simd_support)
         PARENT_SCOPE)
   endif()
 
+  # ----------------------------------------------------------------------------
+  # Check the snippet output for available SIMD x86_64 features. We cache these
+  # results for later runs, to avoid using N times try_run unncessarily
+
+  string(FIND ${run_output} "CPU_SIMD_HAS_SSE=TRUE" simd_sse_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_SSE2=TRUE" simd_sse2_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_SSE3=TRUE" simd_sse3_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_SSSE3=TRUE" simd_ssse3_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_SSE4_1=TRUE" simd_sse4_1_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_SSE4_2=TRUE" simd_sse4_2_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_FMA=TRUE" simd_fma_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_AVX=TRUE" simd_avx_idx)
+  string(FIND ${run_output} "CPU_SIMD_HAS_AVX2=TRUE" simd_avx2_idx)
+
+  # cmake-format: off
+  set(LOCO_SIMD_HAS_CACHED_RESULTS TRUE CACHE BOOL "Cached SIMD checks results")
+  # cmake-format: on
+
+  loco_cache_set_simd_feature(SSE ${simd_sse_idx})
+  loco_cache_set_simd_feature(SSE2 ${simd_sse2_idx})
+  loco_cache_set_simd_feature(SSE3 ${simd_sse3_idx})
+  loco_cache_set_simd_feature(SSSE3 ${simd_ssse3_idx})
+  loco_cache_set_simd_feature(SSE4_1 ${simd_sse4_1_idx})
+  loco_cache_set_simd_feature(SSE4_2 ${simd_sse4_2_idx})
+  loco_cache_set_simd_feature(FMA ${simd_fma_idx})
+  loco_cache_set_simd_feature(AVX ${simd_avx_idx})
+  loco_cache_set_simd_feature(AVX2 ${simd_avx2_idx})
+  # ----------------------------------------------------------------------------
 endfunction()
+
+# ~~~
+# loco_cache_set_simd_feature(<param_feature> <param_result_idx>)
+#
+# Caches the given SIMD feature, checking the given value index from a previous
+# string-find operation (checking for right output of try_run)
+# ~~~
+macro(loco_cache_set_simd_feature param_feature param_result_idx)
+  # -----------------------------------
+  # Check if the CPU_SIMD_HAS_XYZ feature was found in the try_run output
+
+  if(NOT ${param_result_idx} EQUAL -1)
+    set(LOCO_SIMD_CACHE_HAS_${param_feature}
+        TRUE
+        CACHE BOOL "CPU supports SIMD-${param_feature}")
+  else()
+    set(LOCO_SIMD_CACHE_HAS_${param_feature}
+        FALSE
+        CACHE BOOL "CPU doesn't support SIMD-${param_feature}")
+  endif()
+endmacro()
+
+# ~~~
+# loco_cache_get_simd_feature(<param_feature> <param_output_var>)
+#
+# Gets the stored cached value of the requested SIMD feature, and stores it in
+# the output variable given as second parameter
+# ~~~
+macro(loco_cache_get_simd_feature param_feature param_output_var)
+  # cmake-lint: disable=C0103
+  # -----------------------------------
+  # Make sure we have cached the result requested. If not, set just FALSE
+  if(NOT DEFINED LOCO_SIMD_CACHE_HAS_${${param_feature}})
+    loco_message(
+      "SIMD feature ${${param_feature}} is not cached. Setting FALSE")
+    set(${param_output_var}
+        FALSE
+        PARENT_SCOPE)
+    return()
+  endif()
+
+  # -----------------------------------
+  # Set the value of the output variable with the cached value
+  set(${${param_output_var}}
+      ${LOCO_SIMD_CACHE_HAS_${${param_feature}}}
+      PARENT_SCOPE)
+endmacro()
