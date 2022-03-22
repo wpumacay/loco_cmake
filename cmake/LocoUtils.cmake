@@ -104,39 +104,38 @@ function(loco_print_target_properties param_target)
     return()
   endif()
 
-  get_target_property(VAR_TARGET_TYPE ${param_target} TYPE)
-  if(VAR_TARGET_TYPE MATCHES "INTERFACE_LIBRARY")
-    get_target_property(VAR_COMPILE_FEATURES ${param_target}
+  get_target_property(target_type ${param_target} TYPE)
+  if(target_type MATCHES "INTERFACE_LIBRARY")
+    get_target_property(compile_features ${param_target}
                         INTERFACE_COMPILE_FEATURES)
-    get_target_property(VAR_COMPILE_OPTIONS ${param_target}
+    get_target_property(compile_options ${param_target}
                         INTERFACE_COMPILE_OPTIONS)
-    get_target_property(VAR_COMPILE_DEFINITIONS ${param_target}
+    get_target_property(compile_definitions ${param_target}
                         INTERFACE_COMPILE_DEFINITIONS)
-  elseif(VAR_TARGET_TYPE MATCHES "EXECUTABLE|LIBRARY")
-    get_target_property(VAR_COMPILE_FEATURES ${param_target} COMPILE_FEATURES)
-    get_target_property(VAR_COMPILE_OPTIONS ${param_target} COMPILE_OPTIONS)
-    get_target_property(VAR_COMPILE_DEFINITIONS ${param_target}
-                        COMPILE_DEFINITIONS)
+  elseif(target_type MATCHES "EXECUTABLE|LIBRARY")
+    get_target_property(compile_features ${param_target} COMPILE_FEATURES)
+    get_target_property(compile_options ${param_target} COMPILE_OPTIONS)
+    get_target_property(compile_definitions ${param_target} COMPILE_DEFINITIONS)
   endif()
 
   # -----------------------------------
-  # Handle the cases in which the property could not be retrieved
-  if(NOT VAR_COMPILE_FEATURES)
-    set(VAR_COMPILE_FEATURES)
+  # Handle the cases in which the property returned not-found (use empty string)
+  if(NOT compile_features)
+    set(compile_features)
   endif()
-  if(NOT VAR_COMPILE_OPTIONS)
-    set(VAR_COMPILE_OPTIONS)
+  if(NOT compile_options)
+    set(compile_options)
   endif()
-  if(NOT VAR_COMPILE_DEFINITIONS)
-    set(VAR_COMPILE_DEFINITIONS)
+  if(NOT compile_definitions)
+    set(compile_definitions)
   endif()
 
   # -----------------------------------
   # Print the information we could gather from the given target
   message("Target [${param_target}] information ------------------------------")
-  message("Compile features             : ${VAR_COMPILE_FEATURES}")
-  message("Compile options              : ${VAR_COMPILE_OPTIONS}")
-  message("Compile definitions          : ${VAR_COMPILE_DEFINITIONS}")
+  message("Compile features             : ${compile_features}")
+  message("Compile options              : ${compile_options}")
+  message("Compile definitions          : ${compile_definitions}")
   message("-------------------------------------------------------------------")
 endfunction()
 
