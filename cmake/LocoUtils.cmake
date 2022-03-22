@@ -174,6 +174,12 @@ function(loco_print_project_info)
   IF(MSVC)
     message("Visual Studio version        : ${MSVC_VERSION}")
   endif()
+  # -----------------------------------
+  # Notify the user whether this is a ROOT or a CHILD project
+  if(DEFINED ${PROJECT_NAME}_IS_ROOT_PROJECT)
+    message("Is root project              : ${${PROJECT_NAME}_IS_ROOT_PROJECT}")
+  endif()
+  # -----------------------------------
   message("-------------------------------------------------------------------")
 endfunction()
 
