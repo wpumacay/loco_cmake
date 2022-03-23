@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
-project(ExampleSIMD VERSION 1.0.0)
+# -------------------------------------
+# Include all features by including the main entrypoint
+include("../../Index.cmake")
 
 # -------------------------------------
-# Add the root folder (in a normal project the path wouldn't be this weird)
-include("../../CMakeLists.txt")
+# Define the project
+project(ExampleSIMD VERSION 1.0.0)
 
 # -------------------------------------
 # Check for SIMD support (both SSE and AVX on x86_64)

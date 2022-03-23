@@ -1,3 +1,7 @@
+# -------------------------------------
+# Make sure we don't include this twice
+include_guard()
+
 # ~~~
 # loco_message(<param_message>
 #       [LOG_LEVEL <log-level>])

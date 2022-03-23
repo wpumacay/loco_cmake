@@ -3,30 +3,20 @@
 # this repository. This project is based heavily on the `ign-cmake` project,
 # found at https://github.com/ignitionrobotics/ign-cmake
 # ~~~
+
+# -------------------------------------
+# Use `more modern` CMake features
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
-# ==============================================================================
-# Initialize the project
-# ==============================================================================
-project(
-  LocoCmake
-  VERSION 0.0.0
-  DESCRIPTION "A set of CMake helpers that I commonly use in various projects"
-  HOMEPAGE_URL "https://github.com/wpumacay/loco_cmake")
-
 # -------------------------------------
-# Set the path where our helper modules are located (right next to this folder)
-set(LOCO_CMAKE_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
-# -------------------------------------
-# Make sure to tell CMake to include our helper modules
-list(APPEND CMAKE_MODULE_PATH "${LOCO_CMAKE_CMAKE_DIR}")
+# Make sure we don't include this twice
+include_guard()
 
 # Include helper modules provided by this project
-include(LocoUtils)
-include(LocoCheckSIMD)
-include(LocoSetupCompilerFlags)
-include(LocoSetupProject)
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/Utilities.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/CheckSIMD.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupCompiler.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupProject.cmake")
 
 # -------------------------------------
 # On success, just show our project mascot

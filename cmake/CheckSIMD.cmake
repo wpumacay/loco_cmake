@@ -1,3 +1,7 @@
+# -------------------------------------
+# Make sure we don't include this twice
+include_guard()
+
 # ~~~
 # loco_check_simd_support(
 #       [RESULT <result_var>]

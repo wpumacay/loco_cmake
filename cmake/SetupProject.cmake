@@ -1,3 +1,7 @@
+# -------------------------------------
+# Make sure we don't include this twice
+include_guard()
+
 # ~~~
 # loco_initialize_project()
 #
@@ -36,11 +40,11 @@ function(loco_initialize_project)
   if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(project_is_root TRUE) # used here locally
     set(${project_is_root_var_name} TRUE PARENT_SCOPE) # exposed to the dev.
-    loco_message("Project ${PROJECT_NAME} is a ROOT project")
+    loco_message("Project [${PROJECT_NAME}] is a ROOT project")
   else()
     set(project_is_root TRUE) # used here locally
     set(${project_is_root_var_name} TRUE PARENT_SCOPE) # exposed to the dev.
-    loco_message("Project ${PROJECT_NAME} is a CHILD project")
+    loco_message("Project [${PROJECT_NAME}] is a CHILD project")
   endif()
   # cmake-format: on
   # ----------------------------------------------------------------------------

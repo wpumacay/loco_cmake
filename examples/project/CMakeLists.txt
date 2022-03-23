@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
 # -------------------------------------
-# Add the root folder (in a normal project the path wouldn't be this weird)
-include("../../CMakeLists.txt")
+# Include all features by including the main entrypoint
+include("../../Index.cmake")
 
 # -------------------------------------
 # Define the project

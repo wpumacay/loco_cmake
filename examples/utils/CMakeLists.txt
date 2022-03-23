@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 
-project(ExampleUtils VERSION 1.0.0)
+# -------------------------------------
+# Include all features by including the main entrypoint
+include("../../Index.cmake")
 
 # -------------------------------------
-# Add the root folder (in a normal project the path wouldn't be this weird)
-include("../../CMakeLists.txt")
+# Define the project
+project(ExampleUtils VERSION 1.0.0)
 
 # -------------------------------------
 # Use some of the functions and macros provided in the `LocoUtils.cmake` module
