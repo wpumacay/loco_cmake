@@ -98,6 +98,19 @@ macro(loco_configure_git_dependency)
 endmacro()
 
 # ~~~
+# loco_validate_with_default(<variable> <default-value>)
+#
+# Checks if the given variable is defined. If not, set to given default value
+# ~~~
+macro(loco_validate_with_default variable default_value)
+  if(NOT DEFINED ${variable})
+    loco_message(
+      "Undefined variable [${variable}]. Setting default: [${default_value}]")
+    set(${variable} ${default_value})
+  endif()
+endmacro()
+
+# ~~~
 # loco_print_target_properties(<param_target>)
 #
 # Prints to stdout the properties/settings of the given target

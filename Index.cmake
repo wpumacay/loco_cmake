@@ -15,8 +15,8 @@ include_guard()
 # Include helper modules provided by this project
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/Utilities.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CheckSIMD.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupCompiler.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupProject.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupTarget.cmake")
 
 # -------------------------------------
 # On success, just show our project mascot
