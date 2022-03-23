@@ -63,6 +63,9 @@ function(loco_initialize_project)
 
   # cmake-format: off
   if(project_is_root)
+    # Make sure we're using one of the compilers we currently support
+    _loco_check_compiler()
+
     # If not set yet, setup the CXX_STANDARD to be used (c++11, c++14, etc.)
     if(NOT CMAKE_CXX_STANDARD)
       loco_validate_with_default(loco_init_CXX_STANDARD 11)
@@ -153,5 +156,31 @@ function(loco_initialize_project)
   endif()
   # cmake-format: on
   # ----------------------------------------------------------------------------
+
+endfunction()
+
+# ~~~
+# _loco_check_compiler()
+#
+# Internal helper function that sets the name of the compiler used by the whole
+# project during configuration
+# ~~~
+function(_loco_check_compiler)
+  # -----------------------------------
+  # Make sure that we're inside a project configuration
+  if(NOT PROJECT_NAME)
+    loco_message("Must have project in the current scope" LOG_LEVEL WARNING)
+    return()
+  endif()
+
+  # -----------------------------------
+  # Check for the compiler (we currently just support clang, gcc and msvc)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*|.*GNU.*|.*MSVC.*")
+    loco_message(
+      "Compiler [${CMAKE_CXX_COMPILER_ID}] is currently not supported :("
+      LOG_LEVEL FATAL_ERROR)
+  else()
+    loco_message("Using CXX compiler [${CMAKE_CXX_COMPILER_ID}]")
+  endif()
 
 endfunction()
