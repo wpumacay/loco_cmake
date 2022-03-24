@@ -121,6 +121,7 @@ function(loco_print_target_properties param_target)
     return()
   endif()
 
+  # @todo(wilbert): get more properties, like INCLUDE_DIRS, LINK_LIBRARIES, etc.
   get_target_property(target_type ${param_target} TYPE)
   if(target_type MATCHES "INTERFACE_LIBRARY")
     get_target_property(compile_features ${param_target}
