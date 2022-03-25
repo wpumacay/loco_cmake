@@ -114,7 +114,7 @@ function(loco_setup_target target)
 
   # -----------------------------------
   if(DEFINED setup_SOURCES)
-    target_sources(${target} ${target_access} ${setup_SOURCES})
+    target_sources(${target} PRIVATE ${setup_SOURCES})
   endif()
 
   # -----------------------------------
