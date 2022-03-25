@@ -51,8 +51,8 @@ function(loco_initialize_project)
     set(${project_is_root_var_name} TRUE PARENT_SCOPE) # exposed to the dev.
     loco_message("Project [${PROJECT_NAME}] is a ROOT project")
   else()
-    set(project_is_root TRUE) # used here locally
-    set(${project_is_root_var_name} TRUE PARENT_SCOPE) # exposed to the dev.
+    set(project_is_root FALSE) # used here locally
+    set(${project_is_root_var_name} FALSE PARENT_SCOPE) # exposed to the dev.
     loco_message("Project [${PROJECT_NAME}] is a CHILD project")
   endif()
   # cmake-format: on

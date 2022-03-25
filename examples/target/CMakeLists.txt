@@ -22,11 +22,13 @@ loco_print_target_properties(target_interface_lib)
 # -------------------------------------
 # Checking a simple target of type SHARED
 add_library(target_shared_lib SHARED)
-loco_setup_target(target_shared_lib SOURCES "${CMAKE_SOURCE_DIR}/src/sample.cc"
-                  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/inc")
+loco_setup_target(
+  target_shared_lib SOURCES "${CMAKE_SOURCE_DIR}/src/sample.cc"
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/inc" WARNINGS_AS_ERRORS FALSE)
 loco_print_target_properties(target_shared_lib)
 
 # -------------------------------------
+# Checking a simple target of type executable
 add_executable(target_executable)
 loco_setup_target(
   target_executable SOURCES "${CMAKE_SOURCE_DIR}/src/sample_main.cc"

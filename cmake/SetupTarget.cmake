@@ -76,16 +76,30 @@ set(GCC_BASE_WARNINGS
 #       [WARNINGS_AS_ERRORS <Werror>]
 #       [CLANG_WARNINGS <clang-warnings>...]
 #       [GCC_WARNINGS <gcc-warnings>...]
-#       [MSVC_WARNINGS <msvc-warnings>...])
+#       [MSVC_WARNINGS <msvc-warnings>...]
+#       [CXX_STANDARD <cxx-standard>])
 #
 # Creates and configures the given target given the provided properties
 # ~~~
 function(loco_setup_target target)
-  set(options "WARNINGS_AS_ERRORS")
-  set(one_value_args)
+  set(options)
+  set(one_value_args "WARNINGS_AS_ERRORS" "CXX_STANDARD")
   set(multi_value_args "SOURCES" "INCLUDE_DIRECTORIES" "TARGET_DEPENDENCIES")
   cmake_parse_arguments(setup "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
+
+  # -----------------------------------
+  # By default, don't treat warnings as errors (unless the user asked for it)
+  loco_validate_with_default(setup_WARNINGS_AS_ERRORS FALSE)
+
+  # -----------------------------------
+  if(NOT CMAKE_CXX_STANDARD)
+    # By default, use C++11 as the C++ standard
+    loco_validate_with_default(setup_CXX_STANDARD 11)
+  else()
+    # Otherwise, use the global setting for the project
+    loco_validate_with_default(setup_CXX_STANDARD ${CMAKE_CXX_STANDARD})
+  endif()
 
   get_target_property(target_type ${target} TYPE)
   if(${target_type} MATCHES "INTERFACE_LIBRARY")
@@ -116,6 +130,10 @@ function(loco_setup_target target)
     endforeach()
   endif()
 
+  # -----------------------------------
+  target_compile_features(${target} ${target_access}
+                                    cxx_std_${setup_CXX_STANDARD})
+
   # cmake-format: off
   # -----------------------------------
   # Setup the appropriate|required compiler settings
@@ -138,8 +156,8 @@ endfunction()
 #
 # ~~~
 function(loco_setup_target_compiler_settings target)
-  set(options "WARNINGS_AS_ERRORS")
-  set(one_value_args)
+  set(options)
+  set(one_value_args "WARNINGS_AS_ERRORS")
   set(multi_value_args "CLANG_WARNINGS" "GCC_WARNINGS" "MSVC_WARNINGS")
   cmake_parse_arguments(compiler "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})

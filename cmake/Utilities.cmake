@@ -33,7 +33,9 @@ endmacro()
 #     [TARGET <target-name>]
 #     [REPO] <git-repo>
 #     [TAG] <tag|branch|commit-hash>
-#     [BUILD_MODE <build-type>])
+#     [BUILD_TYPE <build-type>]
+#     [DISCARD_UNLESS <discard_flag>]
+#     [BUILD_ARGS <extra-args>...])
 #
 # Fetches and configures a dependency from a given GIT repository. This assumes
 # that the given project uses CMake as build system generator (i.e. has a root
@@ -41,7 +43,7 @@ endmacro()
 # ~~~
 macro(loco_configure_git_dependency)
   set(options) # Not using options for this macro
-  set(one_value_args TARGET REPO TAG BUILD_MODE DISCARD_UNLESS)
+  set(one_value_args TARGET REPO TAG BUILD_TYPE DISCARD_UNLESS)
   set(multi_value_args BUILD_ARGS)
   cmake_parse_arguments(git_dep "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
@@ -77,7 +79,7 @@ macro(loco_configure_git_dependency)
           BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/build"
           STAMP_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/stamp"
           TMP_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/tmp"
-          CMAKE_ARGS -DCMAKE_BUILD_TYPE=${git_dep_BUILD_MODE}
+          CMAKE_ARGS -DCMAKE_BUILD_TYPE=${git_dep_BUILD_TYPE}
                      -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
                      -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                      -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
@@ -245,10 +247,13 @@ function(loco_print_project_info)
   IF(MSVC)
     message("Visual Studio version        : ${MSVC_VERSION}")
   endif()
+
   # -----------------------------------
   # Notify the user whether this is a ROOT or a CHILD project
-  if(DEFINED ${PROJECT_NAME}_IS_ROOT_PROJECT)
-    message("Is root project              : ${${PROJECT_NAME}_IS_ROOT_PROJECT}")
+  string(TOUPPER "${PROJECT_NAME}" proj_name_upper)
+  if(DEFINED ${proj_name_upper}_IS_ROOT_PROJECT)
+    message(
+      "Is root project              : ${${proj_name_upper}_IS_ROOT_PROJECT}")
   endif()
   # -----------------------------------
   message("-------------------------------------------------------------------")
