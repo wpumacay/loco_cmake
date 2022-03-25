@@ -87,22 +87,32 @@ function(loco_setup_target target)
   cmake_parse_arguments(setup "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
 
+  get_target_property(target_type ${target} TYPE)
+  if(${target_type} MATCHES "INTERFACE_LIBRARY")
+    set(target_access INTERFACE)
+  elseif(${target_type} MATCHES "EXECUTABLE|LIBRARY")
+    set(target_access PUBLIC)
+  else()
+    loco_message("Hey there!, [${target}] has an unexpected target type"
+                 LOG_LEVEL WARNING)
+  endif()
+
   # -----------------------------------
   if(DEFINED setup_SOURCES)
-    target_sources(${target} PUBLIC ${setup_SOURCES})
+    target_sources(${target} ${target_access} ${setup_SOURCES})
   endif()
 
   # -----------------------------------
   if(DEFINED setup_INCLUDE_DIRECTORIES)
     foreach(include_dir ${setup_INCLUDE_DIRECTORIES})
-      target_include_directories(${target} PUBLIC ${include_dir})
+      target_include_directories(${target} ${target_access} ${include_dir})
     endforeach()
   endif()
 
   # -----------------------------------
   if(DEFINED setup_TARGET_DEPENDENCIES)
     foreach(target_dep ${setup_TARGET_DEPENDENCIES})
-      target_link_libraries(${target} PUBLIC ${target_dep})
+      target_link_libraries(${target} ${target_access} ${target_dep})
     endforeach()
   endif()
 
@@ -172,7 +182,7 @@ function(loco_setup_target_compiler_settings target)
       ${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${project_warnings_cxx}>
                        $<$<COMPILE_LANGUAGE:C>:${project_warnings_c}>)
   else()
-    loco_message("Target [${target}] doesn't match the pattern we expect"
+    loco_message("Hey there!, [${target}] has an unexpected target type"
                  LOG_LEVEL WARNING)
   endif()
 

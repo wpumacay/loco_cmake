@@ -27,5 +27,12 @@ loco_setup_target(target_shared_lib SOURCES "${CMAKE_SOURCE_DIR}/src/sample.cc"
 loco_print_target_properties(target_shared_lib)
 
 # -------------------------------------
+add_executable(target_executable)
+loco_setup_target(
+  target_executable SOURCES "${CMAKE_SOURCE_DIR}/src/sample_main.cc"
+  TARGET_DEPENDENCIES target_shared_lib)
+loco_print_target_properties(target_executable)
+
+# -------------------------------------
 # Show some info of the this project
 loco_print_project_info()

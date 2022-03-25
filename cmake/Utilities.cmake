@@ -111,50 +111,103 @@ macro(loco_validate_with_default variable default_value)
 endmacro()
 
 # ~~~
-# loco_print_target_properties(<param_target>)
+# loco_print_target_properties(<param_target>
+#               [VERBOSE <verbose>])
 #
 # Prints to stdout the properties/settings of the given target
 # ~~~
-function(loco_print_target_properties param_target)
-  if(NOT TARGET ${param_target})
+function(loco_print_target_properties target)
+  if(NOT TARGET ${target})
     loco_message("Must give a valid target to grab info from" LOG_LEVEL WARNING)
     return()
   endif()
 
-  # @todo(wilbert): get more properties, like INCLUDE_DIRS, LINK_LIBRARIES, etc.
-  get_target_property(target_type ${param_target} TYPE)
-  if(target_type MATCHES "INTERFACE_LIBRARY")
-    get_target_property(compile_features ${param_target}
-                        INTERFACE_COMPILE_FEATURES)
-    get_target_property(compile_options ${param_target}
-                        INTERFACE_COMPILE_OPTIONS)
-    get_target_property(compile_definitions ${param_target}
-                        INTERFACE_COMPILE_DEFINITIONS)
-  elseif(target_type MATCHES "EXECUTABLE|LIBRARY")
-    get_target_property(compile_features ${param_target} COMPILE_FEATURES)
-    get_target_property(compile_options ${param_target} COMPILE_OPTIONS)
-    get_target_property(compile_definitions ${param_target} COMPILE_DEFINITIONS)
-  endif()
+  set(options "VERBOSE")
+  set(one_value_args)
+  set(multi_value_args)
+  cmake_parse_arguments(print "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
+
+  loco_validate_with_default(print_VERBOSE FALSE)
 
   # -----------------------------------
-  # Handle the cases in which the property returned not-found (use empty string)
-  if(NOT compile_features)
-    set(compile_features)
-  endif()
-  if(NOT compile_options)
-    set(compile_options)
-  endif()
-  if(NOT compile_definitions)
-    set(compile_definitions)
-  endif()
-
-  # -----------------------------------
-  # Print the information we could gather from the given target
-  message("Target [${param_target}] information ------------------------------")
-  message("Compile features             : ${compile_features}")
-  message("Compile options              : ${compile_options}")
-  message("Compile definitions          : ${compile_definitions}")
+  # Print the information we could gather from the given target For a list of
+  # available target properties, see section #properties-on-targets below:
+  # https://cmake.org/cmake/help/latest/manual/cmake-properties.7.html
+  message("Target [${target}] information ------------------------------")
+  _loco_print_target_property(${target} PROPERTY CXX_STANDARD
+                              ALLOWS_INTERFACE_PREFIX FALSE)
+  _loco_print_target_property(${target} PROPERTY CXX_EXTENSIONS
+                              ALLOWS_INTERFACE_PREFIX FALSE)
+  _loco_print_target_property(${target} PROPERTY COMPILE_FEATURES
+                              ALLOWS_INTERFACE_PREFIX TRUE)
+  _loco_print_target_property(${target} PROPERTY COMPILE_OPTIONS
+                              ALLOWS_INTERFACE_PREFIX TRUE)
+  _loco_print_target_property(${target} PROPERTY COMPILE_DEFINITIONS
+                              ALLOWS_INTERFACE_PREFIX TRUE)
+  _loco_print_target_property(${target} PROPERTY INCLUDE_DIRECTORIES
+                              ALLOWS_INTERFACE_PREFIX TRUE)
+  _loco_print_target_property(${target} PROPERTY LINK_LIBRARIES
+                              ALLOWS_INTERFACE_PREFIX TRUE)
   message("-------------------------------------------------------------------")
+endfunction()
+
+# ~~~
+# _loco_print_target_property(<target>
+#       [PROPERTY <property>]
+#       [ALLOWS_INTERFACE_PREFIX <prefix>])
+#
+#
+# ~~~
+function(_loco_print_target_property target)
+  if(NOT TARGET ${target})
+    loco_message("Input [${target}] is not a valid target" LOG_LEVEL WARNING)
+    return()
+  endif()
+
+  set(options)
+  set(one_value_args "PROPERTY" "ALLOWS_INTERFACE_PREFIX")
+  set(multi_value_args)
+  cmake_parse_arguments(print "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
+
+  if(NOT DEFINED print_PROPERTY)
+    loco_message("Dit not give a property for the request on target [${target}]"
+                 LOG_LEVEL WARNING)
+    return()
+  endif()
+
+  # -----------------------------------
+  # If no USE_INTERFACE_PREFIX given, assume it's not required
+  loco_validate_with_default(print_ALLOWS_INTERFACE_PREFIX FALSE)
+
+  # -----------------------------------
+  # Check if the given target is of type INTERFACE or not. If so, use the prefix
+  # as expected, otherwise force the ALLOWS_INTERFACE_PREFIX to false
+  get_target_property(target_type ${target} TYPE)
+  if(NOT target_type MATCHES "INTERFACE_LIBRARY")
+    set(print_ALLOWS_INTERFACE_PREFIX FALSE)
+  endif()
+
+  # -----------------------------------
+  # Build prefix for our requested property (if re)
+  if(print_ALLOWS_INTERFACE_PREFIX)
+    set(property_prefix "INTERFACE_")
+  else()
+    set(property_prefix "")
+  endif()
+
+  # -----------------------------------
+  # Query for the given target property and validate it to empty if not found
+  get_target_property(target_property ${target}
+                      "${property_prefix}${print_PROPERTY}")
+  if(NOT target_property)
+    set(target_property "")
+  endif()
+
+  # -----------------------------------
+  # Print the appropriate message :D
+  loco_message("${target}::${print_PROPERTY} > ${target_property}")
 endfunction()
 
 # ~~~
