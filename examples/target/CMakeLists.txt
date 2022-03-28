@@ -15,17 +15,21 @@ loco_initialize_project()
 # -------------------------------------
 # Checking a simple target of type INTERFACE
 add_library(target_interface_lib INTERFACE)
-loco_setup_target_compiler_settings(target_interface_lib WARNINGS_AS_ERRORS
-                                    TRUE)
+loco_setup_target(target_interface_lib WARNINGS_AS_ERRORS TRUE)
 loco_print_target_properties(target_interface_lib)
 
+# cmake-format: off
 # -------------------------------------
 # Checking a simple target of type SHARED
 add_library(target_shared_lib SHARED)
 loco_setup_target(
-  target_shared_lib SOURCES "${CMAKE_SOURCE_DIR}/src/sample.cc"
-  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/inc" WARNINGS_AS_ERRORS FALSE)
+  target_shared_lib
+  SOURCES "${CMAKE_SOURCE_DIR}/src/sample.cc"
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/inc"
+  WARNINGS_AS_ERRORS FALSE
+  TARGET_DEPENDENCIES target_interface_lib)
 loco_print_target_properties(target_shared_lib)
+# cmake-format: on
 
 # -------------------------------------
 # Checking a simple target of type executable

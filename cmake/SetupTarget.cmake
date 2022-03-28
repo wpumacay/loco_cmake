@@ -234,7 +234,7 @@ function(loco_setup_target_compiler_settings target)
   if(target_type MATCHES "INTERFACE_LIBRARY")
     target_compile_options(
       ${target} INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${project_warnings_cxx}>
-                          $<COMPILE_LANGUAGE:C>:${project_warnings_c}>)
+                          $<$<COMPILE_LANGUAGE:C>:${project_warnings_c}>)
   elseif(target_type MATCHES "EXECUTABLE|LIBRARY")
     target_compile_options(
       ${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${project_warnings_cxx}>
