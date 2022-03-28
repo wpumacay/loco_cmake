@@ -95,6 +95,10 @@ function(loco_setup_target target)
   loco_validate_with_default(setup_WARNINGS_AS_ERRORS FALSE)
 
   # -----------------------------------
+  # By default, don't request SIMD checks, unless the user actually requested it
+  loco_validate_with_default(setup_ENABLE_SIMD FALSE)
+
+  # -----------------------------------
   if(NOT CMAKE_CXX_STANDARD)
     # By default, use C++11 as the C++ standard
     loco_validate_with_default(setup_CXX_STANDARD 11)
@@ -133,25 +137,28 @@ function(loco_setup_target target)
   endif()
 
   # -----------------------------------
+  # Set the C++ standard we're using for this project
   target_compile_features(${target} ${target_access}
                                     cxx_std_${setup_CXX_STANDARD})
 
   # -----------------------------------
   # Check for SIMD support if the user requested it (for now, x86_64 only)
-  cmake_host_system_information(RESULT os_platform QUERY OS_PLATFORM)
-  if(${os_platform} MATCHES "x86|x86_64")
-    # Set compiler flags according to the SIMD feature requested
-    loco_try_set_simd_support(TARGET ${target} FEATURE SSE)
-    loco_try_set_simd_support(TARGET ${target} FEATURE SSE2)
-    # See https://docs.microsoft.com/en-us/cpp/build/reference/arch-x86
-    if(NOT MSVC)
-      loco_try_set_simd_support(TARGET ${target} FEATURE SSE3)
-      loco_try_set_simd_support(TARGET ${target} FEATURE SSSE3)
-      loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_1)
-      loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_2)
+  if(setup_ENABLE_SIMD)
+    cmake_host_system_information(RESULT os_platform QUERY OS_PLATFORM)
+    if(${os_platform} MATCHES "x86|x86_64")
+      # Set compiler flags according to the SIMD feature requested
+      loco_try_set_simd_support(TARGET ${target} FEATURE SSE)
+      loco_try_set_simd_support(TARGET ${target} FEATURE SSE2)
+      # See https://docs.microsoft.com/en-us/cpp/build/reference/arch-x86
+      if(NOT MSVC)
+        loco_try_set_simd_support(TARGET ${target} FEATURE SSE3)
+        loco_try_set_simd_support(TARGET ${target} FEATURE SSSE3)
+        loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_1)
+        loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_2)
+      endif()
+      loco_try_set_simd_support(TARGET ${target} FEATURE AVX)
+      loco_try_set_simd_support(TARGET ${target} FEATURE AVX2)
     endif()
-    loco_try_set_simd_support(TARGET ${target} FEATURE AVX)
-    loco_try_set_simd_support(TARGET ${target} FEATURE AVX2)
   endif()
 
   # cmake-format: off
