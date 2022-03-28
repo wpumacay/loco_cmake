@@ -107,7 +107,8 @@ endmacro()
 macro(loco_validate_with_default variable default_value)
   if(NOT DEFINED ${variable})
     loco_message(
-      "Undefined variable [${variable}]. Setting default: [${default_value}]")
+      "Undefined variable [${variable}]. Setting default: [${default_value}]"
+      LOG_LEVEL TRACE)
     set(${variable} ${default_value})
   endif()
 endmacro()

@@ -43,7 +43,7 @@ function(loco_check_simd_support)
   if(LOCO_SIMD_HAS_CACHED_RESULTS)
     loco_message(
       "Getting cached SIMD feature [${simd_FEATURE}] from previous try_run")
-    loco_cache_get_simd_feature(simd_FEATURE simd_RESULT)
+    _loco_cache_get_simd_feature(simd_FEATURE simd_RESULT)
     return()
   endif()
 
@@ -104,10 +104,10 @@ function(loco_check_simd_support)
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_simd_x86.cpp
     # Send the definitions on what header file to use for 'cpuid' usage
     COMPILE_DEFINITIONS
-        -DTINYMATH_SIMD_HAS_INTRIN_CPUID=${simd_has_intrin_cpuid}
-        -DTINYMATH_SIMD_HAS_INTRIN_CPUIDEX=${simd_has_intrin_cpuidex}
-        -DTINYMATH_SIMD_HAS_GET_CPUID=${simd_has_get_cpuid}
-        -DTINYMATH_SIMD_HAS_GET_CPUID_COUNT=${simd_has_get_cpuid_count}
+        -DLOCO_CMAKE_SIMD_HAS_INTRIN_CPUID=${simd_has_intrin_cpuid}
+        -DLOCO_CMAKE_SIMD_HAS_INTRIN_CPUIDEX=${simd_has_intrin_cpuidex}
+        -DLOCO_CMAKE_SIMD_HAS_GET_CPUID=${simd_has_get_cpuid}
+        -DLOCO_CMAKE_SIMD_HAS_GET_CPUID_COUNT=${simd_has_get_cpuid_count}
     # Variable where the messages generated during compilation is stored
     COMPILE_OUTPUT_VARIABLE compile_output
     # Variable where the output of running the program is stored (stdout?)
@@ -155,25 +155,120 @@ function(loco_check_simd_support)
   set(LOCO_SIMD_HAS_CACHED_RESULTS TRUE CACHE BOOL "Cached SIMD checks results")
   # cmake-format: on
 
-  loco_cache_set_simd_feature(SSE ${simd_sse_idx})
-  loco_cache_set_simd_feature(SSE2 ${simd_sse2_idx})
-  loco_cache_set_simd_feature(SSE3 ${simd_sse3_idx})
-  loco_cache_set_simd_feature(SSSE3 ${simd_ssse3_idx})
-  loco_cache_set_simd_feature(SSE4_1 ${simd_sse4_1_idx})
-  loco_cache_set_simd_feature(SSE4_2 ${simd_sse4_2_idx})
-  loco_cache_set_simd_feature(FMA ${simd_fma_idx})
-  loco_cache_set_simd_feature(AVX ${simd_avx_idx})
-  loco_cache_set_simd_feature(AVX2 ${simd_avx2_idx})
+  _loco_cache_set_simd_feature(SSE ${simd_sse_idx})
+  _loco_cache_set_simd_feature(SSE2 ${simd_sse2_idx})
+  _loco_cache_set_simd_feature(SSE3 ${simd_sse3_idx})
+  _loco_cache_set_simd_feature(SSSE3 ${simd_ssse3_idx})
+  _loco_cache_set_simd_feature(SSE4_1 ${simd_sse4_1_idx})
+  _loco_cache_set_simd_feature(SSE4_2 ${simd_sse4_2_idx})
+  _loco_cache_set_simd_feature(FMA ${simd_fma_idx})
+  _loco_cache_set_simd_feature(AVX ${simd_avx_idx})
+  _loco_cache_set_simd_feature(AVX2 ${simd_avx2_idx})
   # ----------------------------------------------------------------------------
 endfunction()
 
 # ~~~
-# loco_cache_set_simd_feature(<param_feature> <param_result_idx>)
+# loco_try_set_simd_support(
+#     [TARGET <target>]
+#     [FEATURE <simd-feature>])
+#
+# Checks if the given `simd-feature` is supported in the current host; if so, it
+# enables the appropriate compiler option (e.g. "-mavx") to the given `target`
+# ~~~
+function(loco_try_set_simd_support)
+  set(options)
+  set(one_value_args "TARGET" "FEATURE" "VERBOSE")
+  set(multi_value_args)
+  cmake_parse_arguments(try_simd "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
+
+  # -----------------------------------
+  # Do some sanity-checks for the expected keyword arguments
+  if(NOT TARGET ${try_simd_TARGET})
+    loco_message("Must give a target, but got [${try_simd_TARGET}] instead"
+                 LOG_LEVEL WARNING)
+    return()
+  endif()
+
+  if(NOT DEFINED try_simd_FEATURE)
+    loco_message("Must give a SIMD feature to check for" LOG_LEVEL WARNING)
+    return()
+  endif()
+
+  loco_validate_with_default(try_simd_VERBOSE FALSE)
+
+  # -----------------------------------
+  # Check if we have the given SIMD feature
+  loco_check_simd_support(RESULT has_feature FEATURE ${try_simd_FEATURE}
+                          VERBOSE ${try_simd_VERBOSE})
+  if(NOT has_feature)
+    loco_message("SIMD-feature [${FEATURE}] not supported :(" LOG_LEVEL STATUS)
+    return()
+  endif()
+
+  # -----------------------------------
+  # Add a preprocessor definition to the given target for that given feature
+  # @note(wilbert): we're making sure that the target-definition is always
+  # passed along, for which we handle transitivity as INTERFACE and PUBLIC
+  # appropriately
+  string(TOUPPER "${PROJECT_NAME}" proj_name_upper)
+  string(TOUPPER "${try_simd_FEATURE}" simd_feature_upper)
+  string(TOLOWER "${try_simd_FEATURE}" simd_feature_lower)
+  get_target_property(target_type ${try_simd_TARGET} TYPE)
+  if(target_type MATCHES "INTERFACE_LIBRARY")
+    target_compile_definitions(
+      ${try_simd_TARGET}
+      INTERFACE -D${proj_name_upper}_${simd_feature_upper}_ENABLED)
+  else()
+    target_compile_definitions(
+      ${try_simd_TARGET}
+      PUBLIC -D${proj_name_upper}_${simd_feature_upper}_ENABLED)
+  endif()
+
+  # -----------------------------------
+  # ~~~
+  # Map the feature name to its correct flag name. There are some corner cases,
+  # which are listed below (most are just from x86_64 SSE or AVX, we might add
+  # support NEON on ARM later, if we get the hardware o.O')
+  #
+  # gcc|clang: {(SSE4_1,-msse4.1),(SSE2,-msse2),(AVX,-mavx),(AVX2,-mavx2),...}
+  # msvc: {(SSE4_1,/arch:SSE4.1),(SSE2,/arch:SSE2),(AVX,/arch:AVX),...}
+  #
+  # @todo(wilbert): refactor to avoid multiple if-statements, maybe later (T_T')
+  # ~~~
+  if(MSVC)
+    string(REPLACE "_" "." simd_feature_validated ${simd_feature_upper})
+    if(target_type MATCHES "INTERFACE_LIBRARY")
+      target_compile_options(${try_simd_TARGET}
+                             INTERFACE /arch:${simd_feature_validated})
+    else()
+      target_compile_options(${try_simd_TARGET}
+                             PUBLIC /arch:${simd_feature_validated})
+    endif()
+  else()
+    string(REPLACE "_" "." simd_feature_validated ${simd_feature_lower})
+    if(target_type MATCHES "INTERFACE_LIBRARY")
+      target_compile_options(${try_simd_TARGET}
+                             INTERFACE -m${simd_feature_validated})
+    else()
+      target_compile_options(${try_simd_TARGET}
+                             PUBLIC -m${simd_feature_validated})
+    endif()
+  endif()
+
+  if(try_simd_VERBOSE)
+    loco_message("Successfully added SIMD feature [${try_simd_FEATURE}] to the
+      given target [${try_simd_TARGET}] for project [${PROJECT_NAME}]")
+  endif()
+endfunction()
+
+# ~~~
+# _loco_cache_set_simd_feature(<param_feature> <param_result_idx>)
 #
 # Caches the given SIMD feature, checking the given value index from a previous
 # string-find operation (checking for right output of try_run)
 # ~~~
-macro(loco_cache_set_simd_feature param_feature param_result_idx)
+macro(_loco_cache_set_simd_feature param_feature param_result_idx)
   # -----------------------------------
   # Check if the CPU_SIMD_HAS_XYZ feature was found in the try_run output
 
@@ -189,12 +284,12 @@ macro(loco_cache_set_simd_feature param_feature param_result_idx)
 endmacro()
 
 # ~~~
-# loco_cache_get_simd_feature(<param_feature> <param_output_var>)
+# _loco_cache_get_simd_feature(<param_feature> <param_output_var>)
 #
 # Gets the stored cached value of the requested SIMD feature, and stores it in
 # the output variable given as second parameter
 # ~~~
-macro(loco_cache_get_simd_feature param_feature param_output_var)
+macro(_loco_cache_get_simd_feature param_feature param_output_var)
   # cmake-lint: disable=C0103
   # -----------------------------------
   # Make sure we have cached the result requested. If not, set just FALSE

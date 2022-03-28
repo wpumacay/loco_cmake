@@ -27,3 +27,20 @@ loco_message("has_sse4_1    : ${has_sse4_1}")
 loco_message("has_sse4_2    : ${has_sse4_2}")
 loco_message("has_avx       : ${has_avx}")
 loco_message("has_avx2      : ${has_avx2}")
+
+# cmake-format: off
+# -------------------------------------
+# Create some targets and add SIMD support for them (if found)
+add_library(target_interface_lib INTERFACE)
+loco_setup_target(target_interface_lib ENABLE_SIMD TRUE)
+loco_print_target_properties(target_interface_lib)
+
+add_library(target_shared_lib SHARED)
+loco_setup_target(
+  target_shared_lib
+  SOURCES "${CMAKE_SOURCE_DIR}/src/sample.cc"
+  INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/inc"
+  WARNINGS_AS_ERRORS FALSE
+  ENABLE_SIMD TRUE)
+loco_print_target_properties(target_shared_lib)
+# cmake-format: on

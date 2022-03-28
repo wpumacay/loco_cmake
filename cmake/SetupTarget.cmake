@@ -78,13 +78,14 @@ set(GCC_BASE_WARNINGS
 #       [CLANG_WARNINGS <clang-warnings>...]
 #       [GCC_WARNINGS <gcc-warnings>...]
 #       [MSVC_WARNINGS <msvc-warnings>...]
-#       [CXX_STANDARD <cxx-standard>])
+#       [CXX_STANDARD <cxx-standard>]
+#       [ENABLE_SIMD <enable-simd>])
 #
 # Creates and configures the given target given the provided properties
 # ~~~
 function(loco_setup_target target)
   set(options)
-  set(one_value_args "WARNINGS_AS_ERRORS" "CXX_STANDARD")
+  set(one_value_args "WARNINGS_AS_ERRORS" "CXX_STANDARD" "ENABLE_SIMD")
   set(multi_value_args "SOURCES" "INCLUDE_DIRECTORIES" "TARGET_DEPENDENCIES")
   cmake_parse_arguments(setup "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
@@ -134,6 +135,24 @@ function(loco_setup_target target)
   # -----------------------------------
   target_compile_features(${target} ${target_access}
                                     cxx_std_${setup_CXX_STANDARD})
+
+  # -----------------------------------
+  # Check for SIMD support if the user requested it (for now, x86_64 only)
+  cmake_host_system_information(RESULT os_platform QUERY OS_PLATFORM)
+  if(${os_platform} MATCHES "x86|x86_64")
+    # Set compiler flags according to the SIMD feature requested
+    loco_try_set_simd_support(TARGET ${target} FEATURE SSE)
+    loco_try_set_simd_support(TARGET ${target} FEATURE SSE2)
+    # See https://docs.microsoft.com/en-us/cpp/build/reference/arch-x86
+    if(NOT MSVC)
+      loco_try_set_simd_support(TARGET ${target} FEATURE SSE3)
+      loco_try_set_simd_support(TARGET ${target} FEATURE SSSE3)
+      loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_1)
+      loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_2)
+    endif()
+    loco_try_set_simd_support(TARGET ${target} FEATURE AVX)
+    loco_try_set_simd_support(TARGET ${target} FEATURE AVX2)
+  endif()
 
   # cmake-format: off
   # -----------------------------------
