@@ -31,9 +31,17 @@ loco_message("has_avx2      : ${has_avx2}")
 # cmake-format: off
 # -------------------------------------
 # Create some targets and add SIMD support for them (if found)
-add_library(target_interface_lib INTERFACE)
-loco_setup_target(target_interface_lib ENABLE_SIMD TRUE)
-loco_print_target_properties(target_interface_lib)
+add_library(target_interface_lib_1 INTERFACE)
+loco_setup_target(target_interface_lib_1 ENABLE_SIMD TRUE)
+loco_print_target_properties(target_interface_lib_1)
+
+add_library(target_interface_lib_2 INTERFACE)
+loco_setup_target(target_interface_lib_2 ENABLE_SSE TRUE)
+loco_print_target_properties(target_interface_lib_2)
+
+add_library(target_interface_lib_3 INTERFACE)
+loco_setup_target(target_interface_lib_3 ENABLE_AVX TRUE)
+loco_print_target_properties(target_interface_lib_3)
 
 add_library(target_shared_lib SHARED)
 loco_setup_target(

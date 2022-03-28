@@ -79,13 +79,16 @@ set(GCC_BASE_WARNINGS
 #       [GCC_WARNINGS <gcc-warnings>...]
 #       [MSVC_WARNINGS <msvc-warnings>...]
 #       [CXX_STANDARD <cxx-standard>]
-#       [ENABLE_SIMD <enable-simd>])
+#       [ENABLE_SIMD <enable-simd>]
+#       [ENABLE_SSE <enable-simd-sse>]
+#       [ENABLE_AVX <enable-simd-avx])
 #
 # Creates and configures the given target given the provided properties
 # ~~~
 function(loco_setup_target target)
   set(options)
-  set(one_value_args "WARNINGS_AS_ERRORS" "CXX_STANDARD" "ENABLE_SIMD")
+  set(one_value_args "WARNINGS_AS_ERRORS" "CXX_STANDARD" "ENABLE_SIMD"
+                     "ENABLE_SSE" "ENABLE_AVX")
   set(multi_value_args "SOURCES" "INCLUDE_DIRECTORIES" "TARGET_DEPENDENCIES")
   cmake_parse_arguments(setup "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
@@ -97,6 +100,8 @@ function(loco_setup_target target)
   # -----------------------------------
   # By default, don't request SIMD checks, unless the user actually requested it
   loco_validate_with_default(setup_ENABLE_SIMD FALSE)
+  loco_validate_with_default(setup_ENABLE_SSE FALSE)
+  loco_validate_with_default(setup_ENABLE_AVX FALSE)
 
   # -----------------------------------
   if(NOT CMAKE_CXX_STANDARD)
@@ -143,21 +148,29 @@ function(loco_setup_target target)
 
   # -----------------------------------
   # Check for SIMD support if the user requested it (for now, x86_64 only)
-  if(setup_ENABLE_SIMD)
+  if(setup_ENABLE_SIMD
+     OR setup_ENABLE_SSE
+     OR setup_ENABLE_AVX)
     cmake_host_system_information(RESULT os_platform QUERY OS_PLATFORM)
     if(${os_platform} MATCHES "x86|x86_64")
-      # Set compiler flags according to the SIMD feature requested
-      loco_try_set_simd_support(TARGET ${target} FEATURE SSE)
-      loco_try_set_simd_support(TARGET ${target} FEATURE SSE2)
-      # See https://docs.microsoft.com/en-us/cpp/build/reference/arch-x86
-      if(NOT MSVC)
-        loco_try_set_simd_support(TARGET ${target} FEATURE SSE3)
-        loco_try_set_simd_support(TARGET ${target} FEATURE SSSE3)
-        loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_1)
-        loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_2)
+      # User can either use the full ENABLE_SIMD flag or single ENABLE_SSE flag
+      if(setup_ENABLE_SIMD OR setup_ENABLE_SSE)
+        # Set compiler flags according to the SIMD feature requested
+        loco_try_set_simd_support(TARGET ${target} FEATURE SSE)
+        loco_try_set_simd_support(TARGET ${target} FEATURE SSE2)
+        # See https://docs.microsoft.com/en-us/cpp/build/reference/arch-x86
+        if(NOT MSVC)
+          loco_try_set_simd_support(TARGET ${target} FEATURE SSE3)
+          loco_try_set_simd_support(TARGET ${target} FEATURE SSSE3)
+          loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_1)
+          loco_try_set_simd_support(TARGET ${target} FEATURE SSE4_2)
+        endif()
       endif()
-      loco_try_set_simd_support(TARGET ${target} FEATURE AVX)
-      loco_try_set_simd_support(TARGET ${target} FEATURE AVX2)
+      # User can either use the full ENABLE_SIMD flag or single ENABLE_AVX flag
+      if(setup_ENABLE_SIMD OR setup_ENABLE_AVX)
+        loco_try_set_simd_support(TARGET ${target} FEATURE AVX)
+        loco_try_set_simd_support(TARGET ${target} FEATURE AVX2)
+      endif()
     endif()
   endif()
 

@@ -42,7 +42,8 @@ function(loco_check_simd_support)
   # Check if we haven't cached the values of a previous try_run
   if(LOCO_SIMD_HAS_CACHED_RESULTS)
     loco_message(
-      "Getting cached SIMD feature [${simd_FEATURE}] from previous try_run")
+      "Getting cached SIMD feature [${simd_FEATURE}] from previous try_run"
+      LOG_LEVEL TRACE)
     _loco_cache_get_simd_feature(simd_FEATURE simd_RESULT)
     return()
   endif()
