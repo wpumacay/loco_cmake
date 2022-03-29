@@ -27,7 +27,7 @@ auto cpuid(uint *info, uint option_eax) -> void {
 #endif
 }
 
-auto cpuidex(uint *info, uint option_eax, uint option_ecx) {
+auto cpuidex(uint *info, uint option_eax, uint option_ecx) -> void {
 #if LOCO_CMAKE_SIMD_HAS_GET_CPUID == 1
     __get_cpuid_count(option_eax, option_ecx, info, info + 1, info + 2,
                       info + 3);
@@ -58,7 +58,7 @@ constexpr uint RETVAL_BIT_AVX = 7;
 constexpr uint RETVAL_BIT_AVX2 = 8;
 
 template <typename T>
-auto report_feature(const std::string &feature_name, T feature_value) {
+auto report_feature(const std::string &feature_name, T feature_value) -> void {
     std::cout << feature_name << "=" << feature_value << '\n';
 }
 
