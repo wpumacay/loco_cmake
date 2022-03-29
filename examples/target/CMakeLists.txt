@@ -39,6 +39,16 @@ loco_setup_target(
   TARGET_DEPENDENCIES target_shared_lib)
 loco_print_target_properties(target_executable)
 
+# cmake-format: off
+# -------------------------------------
+# Create an example using our helper macros
+loco_setup_single_file_example(
+  ${CMAKE_SOURCE_DIR}/src/sample_main.cc
+  INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/inc
+  TARGET_DEPENDENCIES target_shared_lib)
+# cmake-format: on
+loco_print_target_properties(sample_main)
+
 # -------------------------------------
 # Show some info of the this project
 loco_print_project_info()
