@@ -83,7 +83,7 @@ set(GCC_BASE_WARNINGS
 #       [ENABLE_SSE <enable-simd-sse>]
 #       [ENABLE_AVX <enable-simd-avx])
 #
-# Creates and configures the given target given the provided properties
+# Configures the given target given the provided properties
 # ~~~
 function(loco_setup_target target)
   set(options)
@@ -232,16 +232,38 @@ function(loco_setup_target_compiler_settings target)
 
   get_target_property(target_type ${target} TYPE)
   if(target_type MATCHES "INTERFACE_LIBRARY")
-    target_compile_options(
-      ${target} INTERFACE $<$<COMPILE_LANGUAGE:CXX>:${project_warnings_cxx}>
-                          $<$<COMPILE_LANGUAGE:C>:${project_warnings_c}>)
+    set(target_access INTERFACE)
   elseif(target_type MATCHES "EXECUTABLE|LIBRARY")
-    target_compile_options(
-      ${target} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${project_warnings_cxx}>
-                       $<$<COMPILE_LANGUAGE:C>:${project_warnings_c}>)
+    set(target_access PUBLIC)
   else()
-    loco_message("Hey there!, [${target}] has an unexpected target type"
-                 LOG_LEVEL WARNING)
+    set(target_access)
+    loco_message(
+      "Hey there!, target [${target}] has type [${target_type}], which is not
+      supported" LOG_LEVEL WARNING)
   endif()
+
+  target_compile_options(
+    ${target} ${target_access}
+    $<$<COMPILE_LANGUAGE:CXX>:${project_warnings_cxx}>
+    $<$<COMPILE_LANGUAGE:C>:${project_warnings_c}>)
+
+  # -----------------------------------
+  # Configure some definitions regarding the compiler in use
+  if(MSVC)
+    set(target_compiler_id "MSVC")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang.*")
+    set(target_compiler_id "CLANG")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*GNU.*")
+    set(target_compiler_id "GCC")
+  else()
+    loco_message(
+      "Compiler [${CMAKE_CXX_COMPILER_ID}] is currently not supported :("
+      LOG_LEVEL FATAL_ERROR)
+  endif()
+
+  string(TOUPPER "${PROJECT_NAME}" proj_name_upper)
+  target_compile_definitions(
+    ${target} ${target_access}
+              -D${proj_name_upper}_COMPILER_${target_compiler_id})
 
 endfunction()
