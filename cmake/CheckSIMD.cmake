@@ -102,7 +102,7 @@ function(loco_check_simd_support)
     # Where to place the executable generated after linking
     ${CMAKE_CURRENT_BINARY_DIR}
     # File path of the source file to be compiled and run
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/check_simd_x86.cpp
+    ${LOCO_CMAKE_MODULES_FOLDER}/check_simd_x86.cpp
     # Send the definitions on what header file to use for 'cpuid' usage
     COMPILE_DEFINITIONS
         -DLOCO_CMAKE_SIMD_HAS_INTRIN_CPUID=${simd_has_intrin_cpuid}

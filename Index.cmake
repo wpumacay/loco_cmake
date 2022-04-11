@@ -20,6 +20,15 @@ include(FetchContent)
 include(GNUInstallDirs)
 
 # -------------------------------------
+# Set some cached global variables we'll need over the project
+set(LOCO_CMAKE_ROOT_FOLDER
+    "${CMAKE_CURRENT_LIST_DIR}"
+    CACHE STRING "Root folder path for Loco-CMake project")
+set(LOCO_CMAKE_MODULES_FOLDER
+    "${CMAKE_CURRENT_LIST_DIR}/cmake"
+    CACHE STRING "Modules folder path for Loco-CMake project")
+
+# -------------------------------------
 # Include helper modules provided by this project
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/Utilities.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CheckSIMD.cmake")
