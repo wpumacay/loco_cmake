@@ -124,7 +124,11 @@ function(loco_setup_target target)
 
   # -----------------------------------
   if(DEFINED setup_SOURCES)
-    target_sources(${target} PRIVATE ${setup_SOURCES})
+    if(${target_type} MATCHES "INTERFACE_LIBRARY")
+      target_sources(${target} INTERFACE ${setup_SOURCES})
+    elseif(${target_type} MATCHES "EXECUTABLE|LIBRARY")
+      target_sources(${target} PRIVATE ${setup_SOURCES})
+    endif()
   endif()
 
   # -----------------------------------

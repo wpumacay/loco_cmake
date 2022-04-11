@@ -265,9 +265,15 @@ function(_loco_print_target_property target)
   loco_validate_with_default(print_ALLOWS_INTERFACE_PREFIX FALSE)
 
   # -----------------------------------
-  # Check if the given target is of type INTERFACE or not. If so, use the prefix
-  # as expected, otherwise force the ALLOWS_INTERFACE_PREFIX to false
+  # Check if the given target is of type INTERFACE or not. If so, continue using
+  # the prefix as expected only if the property "allows it" (otherwise, return)
   get_target_property(target_type ${target} TYPE)
+  if((target_type MATCHES "INTERFACE_LIBRARY")
+     AND (NOT print_ALLOWS_INTERFACE_PREFIX))
+    return()
+  endif()
+
+  # If the target is non-interface, then we won't be using the INTERFACE prefix
   if(NOT target_type MATCHES "INTERFACE_LIBRARY")
     set(print_ALLOWS_INTERFACE_PREFIX FALSE)
   endif()
