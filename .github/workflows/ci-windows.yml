@@ -1,0 +1,32 @@
+name: ci-windows
+
+on:
+  push:
+  pull_request:
+    branches:
+      - master
+      - dev
+
+jobs:
+  build-msvc:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022]
+        build-type: [Release, Debug]
+        cmake-version: [3.16.x,
+                        3.23.x]
+
+    name: "Build: ${{matrix.os}} • ${{matrix.build-type}} • MSVC"
+    runs-on: ${{matrix.os}}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Update CMake
+      uses: jwlawson/actions-setup-cmake@v1.10
+      with:
+        cmake-version: ${{matrix.cmake-version}}
+
+    - name: Setup examples, configure, and run them
+      run: .\scripts\run_examples.bat ${{matrix.build-type}}

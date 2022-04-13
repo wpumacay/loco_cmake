@@ -1,5 +1,6 @@
 pre-commit
 cmakelang[YAML]
 cpplint
+yamllint
 pylint
 black
