@@ -7,17 +7,18 @@ on:
       - master
       - dev
 
+# TODO: replace hard-coded if statements for msvc-CMake configuration
 jobs:
   build-msvc:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022]
+        os: [windows-2016, windows-2019, windows-2022]
         build-type: [Release, Debug]
         cmake-version: [3.16.x,
                         3.23.x]
 
-    name: "Build: ${{matrix.os}} • ${{matrix.build-type}} • MSVC"
+    name: "Build: ${{matrix.os}} • ${{matrix.build-type}} • ${{matrix.cmake-version}} • MSVC"
     runs-on: ${{matrix.os}}
 
     steps:
@@ -28,5 +29,23 @@ jobs:
       with:
         cmake-version: ${{matrix.cmake-version}}
 
-    - name: Setup examples, configure, and run them
+    # Configure for msvc-17
+    - name: Setup examples, configure, and run them (${{matrix.os}})
+      if: ${{matrix.os == "windows-2022"}}
+      env:
+        CMAKE_GENERATOR: "Visual Studio 17 2022"
+      run: .\scripts\run_examples.bat ${{matrix.build-type}}
+
+    # Configure for msvc-16
+    - name: Setup examples, configure, and run them (${{matrix.os}})
+      if: ${{matrix.os == "windows-2019"}}
+      env:
+        CMAKE_GENERATOR: "Visual Studio 16 2019"
+      run: .\scripts\run_examples.bat ${{matrix.build-type}}
+
+    # Configure for msvc-15
+    - name: Setup examples, configure, and run them (${{matrix.os}})
+      if: ${{matrix.os == "windows-2016"}}
+      env:
+        CMAKE_GENERATOR: "Visual Studio 15 2017"
       run: .\scripts\run_examples.bat ${{matrix.build-type}}
