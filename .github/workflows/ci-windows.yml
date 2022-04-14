@@ -15,7 +15,7 @@ jobs:
       matrix:
         os: [windows-2019, windows-2022]
         build-type: [Release, RelWithDebInfo, MinSizeRel, Debug]
-        cmake-version: [3.17.x, 3.18.x, 3.19.x, 3.20.x, 3.21.x, 3.22.x, 3.23.x]
+        cmake-version: [3.21.x, 3.22.x, 3.23.x]
 
     name: "Build: ${{matrix.os}} • ${{matrix.build-type}} • ${{matrix.cmake-version}} • MSVC"
     runs-on: ${{matrix.os}}
