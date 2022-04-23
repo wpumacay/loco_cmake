@@ -33,6 +33,10 @@ jobs:
         with:
           cmake-version: ${{matrix.cmake-version}}
 
+      - name: Setup Ninja
+        if: ${{ matrix.generator == 'Ninja' }}
+        uses: ashutoshvarma/setup-ninja@master
+
       # Configure for GCC
       - name: Configure GNU/GCC as C/C++ compiler
         if: ${{ matrix.compiler == 'gcc' }}
