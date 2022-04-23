@@ -100,6 +100,57 @@ macro(loco_configure_git_dependency)
 endmacro()
 
 # ~~~
+# loco_setup_static_analyzers(
+#     [USE_CLANG_TIDY <use-clang-tidy>]
+#     [USE_CPPLINT <use-cpplint>]
+#     [USE_CPPCHECK <use-cppcheck>])
+# ~~~
+macro(loco_setup_static_analyzers)
+
+endmacro()
+
+# ~~~
+# _loco_setup_clang_tidy()
+# ~~~
+macro(_loco_setup_clang_tidy)
+
+endmacro()
+
+# ~~~
+#
+# ~~~
+macro(_loco_setup_cpplint)
+
+endmacro()
+
+# ~~~
+# _loco_setup_cppcheck()
+# ~~~
+macro(_loco_setup_cppcheck)
+  set(options)
+  set(one_value_args "TEMPLATE")
+  set(multi_value_args)
+  cmake_parse_arguments(tool "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
+  # -----------------------------------
+  # Sanity check (find the cppcheck executable)
+  find_program(cppcheck_tool cppcheck)
+  if(NOT cppcheck_tool)
+    loco_message("CppCheck could not be found :(" WARNING)
+    return()
+  endif()
+
+  # -----------------------------------
+  # Setup template for logs from cppcheck
+  if(CMAKE_GENERATOR MATCHES ".*Visual Studio.*")
+    set(cppcheck_template "vs")
+  else()
+    set(cppcheck_template "gcc")
+  endif()
+
+endmacro()
+
+# ~~~
 # loco_setup_example(
 #       [TARGET <target-name>]
 #       [SOURCES <sources-list>...]
