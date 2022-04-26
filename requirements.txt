@@ -1,5 +1,5 @@
 pre-commit
-cmakelang[YAML]
+cmakelang
 cpplint
 yamllint
 pylint
