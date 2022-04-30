@@ -17,6 +17,7 @@ Testing/
 
 # Exclude settings from editors|IDEs
 .vscode
+.clangd
 
 # Exclude temporary folders
 *.egg-info/
