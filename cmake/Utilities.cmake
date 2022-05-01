@@ -2,6 +2,12 @@
 # Make sure we don't include this twice
 include_guard()
 
+# -------------------------------------
+# References:
+#
+# * CppBestPractices CMake helpers: https://github.com/aminya/project_options
+# * https://cmake.org/cmake/help/latest/variable/CMAKE_LANG_CPPCHECK.html
+
 # ~~~
 # loco_message(<param_message>
 #       [LOG_LEVEL <log-level>])
@@ -100,53 +106,88 @@ macro(loco_configure_git_dependency)
 endmacro()
 
 # ~~~
-# loco_setup_static_analyzers(
-#     [USE_CLANG_TIDY <use-clang-tidy>]
-#     [USE_CPPLINT <use-cpplint>]
-#     [USE_CPPCHECK <use-cppcheck>])
+# loco_setup_clang_tidy()
 # ~~~
-macro(loco_setup_static_analyzers)
-
+macro(loco_setup_clang_tidy)
+  # @todo(wilbert)
 endmacro()
 
 # ~~~
-# _loco_setup_clang_tidy()
+# loco_setup_cpplint()
 # ~~~
-macro(_loco_setup_clang_tidy)
-
+macro(loco_setup_cpplint)
+  # @todo(wilbert)
 endmacro()
 
 # ~~~
-#
+# loco_setup_cppcheck(
+#     [TEMPLATE <template>]
+#     [CXX_STANDARD <cxx-standard>]
+#     [WARNINGS_AS_ERRORS <warnings-as-errors>]
+#     [EXTRA_ARGS <extra-args...>])
 # ~~~
-macro(_loco_setup_cpplint)
-
-endmacro()
-
-# ~~~
-# _loco_setup_cppcheck()
-# ~~~
-macro(_loco_setup_cppcheck)
+macro(loco_setup_cppcheck)
   set(options)
-  set(one_value_args "TEMPLATE")
-  set(multi_value_args)
-  cmake_parse_arguments(tool "${options}" "${one_value_args}"
+  set(one_value_args "TEMPLATE" "CXX_STANDARD" "WARNINGS_AS_ERRORS")
+  set(multi_value_args "EXTRA_ARGS")
+  cmake_parse_arguments(cppcheck "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
+
   # -----------------------------------
   # Sanity check (find the cppcheck executable)
-  find_program(cppcheck_tool cppcheck)
-  if(NOT cppcheck_tool)
-    loco_message("CppCheck could not be found :(" WARNING)
+  find_program(cppcheck_program cppcheck)
+  if(NOT cppcheck_program)
+    loco_message("[cppcheck] could not be found :(" WARNING)
     return()
+  endif()
+  loco_message("[cppcheck] found at ${cppcheck_program}" STATUS)
+
+  # -----------------------------------
+  # Define default values if the user doesn't provide them
+  if(CMAKE_GENERATOR MATCHES ".*Visual Studio.*")
+    set(cppcheck_TEMPLATE "vs")
+  else()
+    loco_validate_with_default(cppcheck_TEMPLATE "gcc")
+  endif()
+  if(NOT CMAKE_CXX_STANDARD)
+    loco_validate_with_default(cppcheck_CXX_STANDARD "c++11")
+  else()
+    loco_validate_with_default(cppcheck_CXX_STANDARD "c++${CMAKE_CXX_STANDARD}")
+  endif()
+  loco_validate_with_default(cppcheck_WARNINGS_AS_ERRORS FALSE)
+  loco_validate_with_default(cppcheck_EXTRA_ARGS "")
+
+  # cmake-format: off
+  # -----------------------------------
+  # Tell CMake to use cppcheck (and pass extra-args if given)
+  if("${cppcheck_EXTRA_ARGS}" STREQUAL "")
+    set(CMAKE_CXX_CPPCHECK
+        ${cppcheck_program}
+        --template=${cppcheck_TEMPLATE}
+        --std=${cppcheck_CXX_STANDARD}
+        --enable=style,performance,warning,portability
+        --inline-suppr
+        --suppress=internalAstError
+        --suppress=unmatchedSuppression
+        --inconclusive)
+  else()
+    set(CMAKE_CXX_CPPCHECK
+        ${cppcheck_program}
+        --template=${cppcheck_TEMPLATE}
+        --std=${cppcheck_CXX_STANDARD}
+        ${cppcheck_EXTRA_ARGS})
+  endif()
+  # cmake-format: on
+
+  # -----------------------------------
+  # Treat warnings as errors if the users says so
+  if(cppcheck_WARNINGS_AS_ERRORS)
+    list(APPEND CMAKE_CXX_CPPCHECK --error-exitcode=2)
   endif()
 
   # -----------------------------------
-  # Setup template for logs from cppcheck
-  if(CMAKE_GENERATOR MATCHES ".*Visual Studio.*")
-    set(cppcheck_template "vs")
-  else()
-    set(cppcheck_template "gcc")
-  endif()
+  # Print the whole line representing the command
+  loco_message("cppcheck-linter> ${CMAKE_CXX_CPPCHECK}")
 
 endmacro()
 

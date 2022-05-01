@@ -13,6 +13,10 @@ project(ExampleTarget VERSION 1.0.0)
 loco_initialize_project()
 
 # -------------------------------------
+# Setup static analyzers
+loco_setup_cppcheck()
+
+# -------------------------------------
 # Checking a simple target of type INTERFACE
 add_library(target_interface_lib INTERFACE)
 loco_setup_target(target_interface_lib WARNINGS_AS_ERRORS TRUE)
