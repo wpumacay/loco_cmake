@@ -113,10 +113,84 @@ macro(loco_setup_clang_tidy)
 endmacro()
 
 # ~~~
-# loco_setup_cpplint()
+# loco_setup_cpplint(
+#     [QUIET <quiet>]
+#     [COUNTING <counting>]
+#     [VERBOSITY <verbosity-level>]
+#     [LINE_LENGTH <line-length>]
+#     [EXCLUDES <excludes-list...>]
+#     [FILTERS <filters-list...>]
+#     [EXTRA_ARGS <extra-args-list...>])
 # ~~~
 macro(loco_setup_cpplint)
-  # @todo(wilbert)
+  set(options)
+  set(one_value_args "QUIET" "COUNTING" "VERBOSITY" "LINE_LENGTH")
+  set(multi_value_args "EXCLUDES" "FILTERS" "EXTRA_ARGS")
+  cmake_parse_arguments(cpplint "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
+
+  # -----------------------------------
+  # Sanity check (find the cpplint executable)
+  find_program(cpplint_program cpplint)
+  if(NOT cpplint_program)
+    loco_message("[cpplint] could not be found :(" WARNING)
+    return()
+  endif()
+  loco_message("[cpplint] found at ${cpplint_program}" STATUS)
+
+  # -----------------------------------
+  # Define default values in case the user didn't provide them. For all valid
+  # options check use `cpplint --help` in your terminal of choice :)
+  loco_validate_with_default(cpplint_QUIET TRUE)
+  loco_validate_with_default(cpplint_COUNTING "total")
+  loco_validate_with_default(cpplint_VERBOSITY 0)
+  loco_validate_with_default(cpplint_LINE_LENGTH 80)
+  loco_validate_with_default(cpplint_EXCLUDES "")
+  loco_validate_with_default(cpplint_FILTERS "")
+  loco_validate_with_default(cpplint_EXTRA_ARGS "")
+
+  # cmake-format: off
+  # -----------------------------------
+  # Tell CMake to use cpplint with the given configuration
+  set(CMAKE_CXX_CPPLINT
+      ${cpplint_program}
+      --counting=${cpplint_COUNTING}
+      --verbose=${cpplint_VERBOSITY}
+      --linelength=${cpplint_LINE_LENGTH})
+  # cmake-format: on
+
+  # -----------------------------------
+  # If quiet is given, don't complain for warnings
+  if(cpplint_QUIET)
+    list(APPEND CMAKE_CXX_CPPLINT --quiet)
+  endif()
+
+  # -----------------------------------
+  # Add --exclude=cpplint_EXCLUDES[i] for i in num-excludes
+  if(NOT cpplint_EXCLUDES STREQUAL "")
+    foreach(exclude_path IN LISTS cpplint_EXCLUDES)
+      list(APPEND CMAKE_CXX_CPPLINT --exclude=${exclude_path})
+    endforeach()
+  endif()
+
+  # ---------------------------------
+  # Add --filter=cpplint_FILTERS[i] for i in num-filters
+  if(NOT cpplint_FILTERS STREQUAL "")
+    foreach(filter IN LISTS cpplint_FILTERS)
+      list(APPEND CMAKE_CXX_CPPLINT --filter=${filter})
+    endforeach()
+  endif()
+
+  # ---------------------------------
+  # Add all extra-arguments given by the user
+  if(NOT cpplint_EXTRA_ARGS STREQUAL "")
+    list(APPEND CMAKE_CXX_CPPLINT "${cpplint_EXTRA_ARGS}")
+  endif()
+
+  # -----------------------------------
+  # Print the whole line representing the command
+  loco_message("cpplint-linter> ${CMAKE_CXX_CPPLINT}")
+
 endmacro()
 
 # ~~~

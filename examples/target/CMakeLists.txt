@@ -15,6 +15,7 @@ loco_initialize_project()
 # -------------------------------------
 # Setup static analyzers
 loco_setup_cppcheck()
+loco_setup_cpplint()
 
 # -------------------------------------
 # Checking a simple target of type INTERFACE
