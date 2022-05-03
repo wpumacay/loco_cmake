@@ -16,8 +16,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
-        build-type: [Release, RelWithDebInfo, MinSizeRel, Debug]
-        cmake-version: [3.15.x, 3.16.x, 3.17.x, 3.18.x, 3.19.x, 3.20.x, 3.21.x]
+        build-type: [Release, Debug]
+        cmake-version: [3.15.x, 3.23.x]
         compiler: [gcc, clang]
         generator: [Unix Makefiles, Ninja]
 
@@ -32,6 +32,10 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v1.10
         with:
           cmake-version: ${{matrix.cmake-version}}
+
+      - name: Setup Ninja
+        if: ${{ matrix.generator == 'Ninja' }}
+        uses: ashutoshvarma/setup-ninja@master
 
       # Configure for GCC
       - name: Configure GNU/GCC as C/C++ compiler
@@ -56,4 +60,5 @@ jobs:
       - name: Run examples
         run: |
           chmod +x scripts/run_examples.sh
-          bash scripts/run_examples.sh ${{matrix.build-type}}
+          bash scripts/run_examples.sh clean
+          bash scripts/run_examples.sh build ${{matrix.build-type}}
