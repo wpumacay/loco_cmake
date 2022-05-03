@@ -60,4 +60,5 @@ jobs:
       - name: Run examples
         run: |
           chmod +x scripts/run_examples.sh
-          bash scripts/run_examples.sh ${{matrix.build-type}}
+          bash scripts/run_examples.sh clean
+          bash scripts/run_examples.sh build ${{matrix.build-type}}
