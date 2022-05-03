@@ -106,10 +106,98 @@ macro(loco_configure_git_dependency)
 endmacro()
 
 # ~~~
-# loco_setup_clang_tidy()
+# loco_setup_clang_tidy(
+#     [CONFIG_FILE <config-file>]
+#     [FIX <fix>]
+#     [FIX_ERRORS <fix-errors>]
+#     [FORMAT_STYLE <format-style>]
+#     [QUIET <quiet>]
+#     [CHECKS <checks-list...>]
+#     [WARNINGS_AS_ERRORS <warnings-as-errors-list...]
+#     [EXTRA_ARGS <extra-args-list...>])
 # ~~~
 macro(loco_setup_clang_tidy)
-  # @todo(wilbert)
+  set(options)
+  set(one_value_args "CONFIG_FILE" "FIX" "FIX_ERRORS" "FORMAT_STYLE" "QUIET")
+  set(multi_value_args "CHECKS" "WARNINGS_AS_ERRORS" "EXTRA_ARGS")
+  cmake_parse_arguments(clang_tidy "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
+
+  # -----------------------------------
+  # Sanity check (find the clang-tidy executable)
+  find_program(clang_tidy_program clang-tidy)
+  if(NOT clang_tidy_program)
+    loco_message("[clang-tidy] could not be found :(" WARNING)
+    return()
+  endif()
+  loco_message("[clang-tidy] found at ${clang_tidy_program}" STATUS)
+
+  # -----------------------------------
+  # Define default values in case the user didn't provide them. For all valid
+  # options check use `clang-tidy --help` in your terminal of choice :)
+  loco_validate_with_default(clang_tidy_CONFIG_FILE "")
+  loco_validate_with_default(clang_tidy_FIX FALSE)
+  loco_validate_with_default(clang_tidy_FIX_ERRORS FALSE)
+  loco_validate_with_default(clang_tidy_FORMAT_STYLE "none")
+  loco_validate_with_default(clang_tidy_QUIET FALSE)
+  loco_validate_with_default(clang_tidy_CHECKS "")
+  loco_validate_with_default(clang_tidy_WARNINGS_AS_ERRORS "")
+  loco_validate_with_default(clang_tidy_EXTRA_ARGS "")
+
+  # cmake-format: off
+  # -----------------------------------
+  # Tell CMake to use clang-tidy with the given configuration
+  set(CMAKE_CXX_CLANG_TIDY
+      ${clang_tidy_program}
+      --format-style=${clang_tidy_FORMAT_STYLE})
+  # cmake-format: on
+
+  # ---------------------------------
+  # Add --config-file="" if given by the user
+  if(NOT ${clang_tidy_CONFIG_FILE} STREQUAL "")
+    list(APPEND CMAKE_CXX_CLANG_TIDY --config-file=${clang_tidy_CONFIG_FILE})
+  endif()
+
+  # ---------------------------------
+  # Add --fix if given by the user
+  if(clang_tidy_FIX)
+    list(APPEND CMAKE_CXX_CLANG_TIDY --fix)
+  endif()
+
+  # ---------------------------------
+  # Add --fix-errors if given by the user
+  if(clang_tidy_FIX_ERRORS)
+    list(APPEND CMAKE_CXX_CLANG_TIDY --fix-errors)
+  endif()
+
+  # ---------------------------------
+  # Add --quiet if given by the user
+  if(clang_tidy_QUIET)
+    list(APPEND CMAKE_CXX_CLANG_TIDY --quiet)
+  endif()
+
+  # ---------------------------------
+  # Add --checks="LIST OF CHECKS" if given by the user
+  if(NOT "${clang_tidy_CHECKS}" STREQUAL "")
+    list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_CHECKS}")
+  endif()
+
+  # ---------------------------------
+  # Add --warnings-as-errors="LIST OF WARNINGS" if given by the user
+  if(NOT "${clang_tidy_WARNINGS_AS_ERRORS}" STREQUAL "")
+    list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_WARNINGS_AS_ERRORS}")
+  endif()
+
+  # ---------------------------------
+  # Add all extra-arguments given by the user
+  if(NOT "${clang_tidy_EXTRA_ARGS}" STREQUAL "")
+    list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_EXTRA_ARGS}")
+  endif()
+
+  # -----------------------------------
+  # Print the whole line representing the command
+  loco_message("clang-tidy-linter> ${CMAKE_CXX_CLANG_TIDY}")
+
 endmacro()
 
 # ~~~
@@ -167,7 +255,7 @@ macro(loco_setup_cpplint)
 
   # -----------------------------------
   # Add --exclude=cpplint_EXCLUDES[i] for i in num-excludes
-  if(NOT cpplint_EXCLUDES STREQUAL "")
+  if(NOT "${cpplint_EXCLUDES}" STREQUAL "")
     foreach(exclude_path IN LISTS cpplint_EXCLUDES)
       list(APPEND CMAKE_CXX_CPPLINT --exclude=${exclude_path})
     endforeach()
@@ -175,7 +263,7 @@ macro(loco_setup_cpplint)
 
   # ---------------------------------
   # Add --filter=cpplint_FILTERS[i] for i in num-filters
-  if(NOT cpplint_FILTERS STREQUAL "")
+  if(NOT "${cpplint_FILTERS}" STREQUAL "")
     foreach(filter IN LISTS cpplint_FILTERS)
       list(APPEND CMAKE_CXX_CPPLINT --filter=${filter})
     endforeach()
@@ -183,7 +271,7 @@ macro(loco_setup_cpplint)
 
   # ---------------------------------
   # Add all extra-arguments given by the user
-  if(NOT cpplint_EXTRA_ARGS STREQUAL "")
+  if(NOT "${cpplint_EXTRA_ARGS}" STREQUAL "")
     list(APPEND CMAKE_CXX_CPPLINT "${cpplint_EXTRA_ARGS}")
   endif()
 
