@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
         build-type: [Release, Debug]
-        cmake-version: [3.15.x, 3.18.x, 3.21.x, 3.23.x]
+        cmake-version: [3.15.x, 3.23.x]
         compiler: [gcc, clang]
         generator: [Unix Makefiles, Ninja]
 
