@@ -126,77 +126,77 @@ macro(loco_setup_clang_tidy)
   # -----------------------------------
   # Sanity check (find the clang-tidy executable)
   find_program(clang_tidy_program clang-tidy)
-  if(NOT clang_tidy_program)
+  if(clang_tidy_program)
+    loco_message("[clang-tidy] found at ${clang_tidy_program}" STATUS)
+
+    # -----------------------------------
+    # Define default values in case the user didn't provide them. For all valid
+    # options check use `clang-tidy --help` in your terminal of choice :)
+    loco_validate_with_default(clang_tidy_CONFIG_FILE "")
+    loco_validate_with_default(clang_tidy_FIX FALSE)
+    loco_validate_with_default(clang_tidy_FIX_ERRORS FALSE)
+    loco_validate_with_default(clang_tidy_FORMAT_STYLE "none")
+    loco_validate_with_default(clang_tidy_QUIET FALSE)
+    loco_validate_with_default(clang_tidy_CHECKS "")
+    loco_validate_with_default(clang_tidy_WARNINGS_AS_ERRORS "")
+    loco_validate_with_default(clang_tidy_EXTRA_ARGS "")
+
+    # cmake-format: off
+    # -----------------------------------
+    # Tell CMake to use clang-tidy with the given configuration
+    set(CMAKE_CXX_CLANG_TIDY
+        ${clang_tidy_program}
+        --format-style=${clang_tidy_FORMAT_STYLE})
+    # cmake-format: on
+
+    # ---------------------------------
+    # Add --config-file="" if given by the user
+    if(NOT ${clang_tidy_CONFIG_FILE} STREQUAL "")
+      list(APPEND CMAKE_CXX_CLANG_TIDY --config-file=${clang_tidy_CONFIG_FILE})
+    endif()
+
+    # ---------------------------------
+    # Add --fix if given by the user
+    if(clang_tidy_FIX)
+      list(APPEND CMAKE_CXX_CLANG_TIDY --fix)
+    endif()
+
+    # ---------------------------------
+    # Add --fix-errors if given by the user
+    if(clang_tidy_FIX_ERRORS)
+      list(APPEND CMAKE_CXX_CLANG_TIDY --fix-errors)
+    endif()
+
+    # ---------------------------------
+    # Add --quiet if given by the user
+    if(clang_tidy_QUIET)
+      list(APPEND CMAKE_CXX_CLANG_TIDY --quiet)
+    endif()
+
+    # ---------------------------------
+    # Add --checks="LIST OF CHECKS" if given by the user
+    if(NOT "${clang_tidy_CHECKS}" STREQUAL "")
+      list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_CHECKS}")
+    endif()
+
+    # ---------------------------------
+    # Add --warnings-as-errors="LIST OF WARNINGS" if given by the user
+    if(NOT "${clang_tidy_WARNINGS_AS_ERRORS}" STREQUAL "")
+      list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_WARNINGS_AS_ERRORS}")
+    endif()
+
+    # ---------------------------------
+    # Add all extra-arguments given by the user
+    if(NOT "${clang_tidy_EXTRA_ARGS}" STREQUAL "")
+      list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_EXTRA_ARGS}")
+    endif()
+
+    # -----------------------------------
+    # Print the whole line representing the command
+    loco_message("[clang-tidy]: ${CMAKE_CXX_CLANG_TIDY}")
+  else()
     loco_message("[clang-tidy] could not be found :(" WARNING)
-    return()
   endif()
-  loco_message("[clang-tidy] found at ${clang_tidy_program}" STATUS)
-
-  # -----------------------------------
-  # Define default values in case the user didn't provide them. For all valid
-  # options check use `clang-tidy --help` in your terminal of choice :)
-  loco_validate_with_default(clang_tidy_CONFIG_FILE "")
-  loco_validate_with_default(clang_tidy_FIX FALSE)
-  loco_validate_with_default(clang_tidy_FIX_ERRORS FALSE)
-  loco_validate_with_default(clang_tidy_FORMAT_STYLE "none")
-  loco_validate_with_default(clang_tidy_QUIET FALSE)
-  loco_validate_with_default(clang_tidy_CHECKS "")
-  loco_validate_with_default(clang_tidy_WARNINGS_AS_ERRORS "")
-  loco_validate_with_default(clang_tidy_EXTRA_ARGS "")
-
-  # cmake-format: off
-  # -----------------------------------
-  # Tell CMake to use clang-tidy with the given configuration
-  set(CMAKE_CXX_CLANG_TIDY
-      ${clang_tidy_program}
-      --format-style=${clang_tidy_FORMAT_STYLE})
-  # cmake-format: on
-
-  # ---------------------------------
-  # Add --config-file="" if given by the user
-  if(NOT ${clang_tidy_CONFIG_FILE} STREQUAL "")
-    list(APPEND CMAKE_CXX_CLANG_TIDY --config-file=${clang_tidy_CONFIG_FILE})
-  endif()
-
-  # ---------------------------------
-  # Add --fix if given by the user
-  if(clang_tidy_FIX)
-    list(APPEND CMAKE_CXX_CLANG_TIDY --fix)
-  endif()
-
-  # ---------------------------------
-  # Add --fix-errors if given by the user
-  if(clang_tidy_FIX_ERRORS)
-    list(APPEND CMAKE_CXX_CLANG_TIDY --fix-errors)
-  endif()
-
-  # ---------------------------------
-  # Add --quiet if given by the user
-  if(clang_tidy_QUIET)
-    list(APPEND CMAKE_CXX_CLANG_TIDY --quiet)
-  endif()
-
-  # ---------------------------------
-  # Add --checks="LIST OF CHECKS" if given by the user
-  if(NOT "${clang_tidy_CHECKS}" STREQUAL "")
-    list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_CHECKS}")
-  endif()
-
-  # ---------------------------------
-  # Add --warnings-as-errors="LIST OF WARNINGS" if given by the user
-  if(NOT "${clang_tidy_WARNINGS_AS_ERRORS}" STREQUAL "")
-    list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_WARNINGS_AS_ERRORS}")
-  endif()
-
-  # ---------------------------------
-  # Add all extra-arguments given by the user
-  if(NOT "${clang_tidy_EXTRA_ARGS}" STREQUAL "")
-    list(APPEND CMAKE_CXX_CLANG_TIDY "${clang_tidy_EXTRA_ARGS}")
-  endif()
-
-  # -----------------------------------
-  # Print the whole line representing the command
-  loco_message("clang-tidy-linter> ${CMAKE_CXX_CLANG_TIDY}")
 
 endmacro()
 
@@ -220,64 +220,64 @@ macro(loco_setup_cpplint)
   # -----------------------------------
   # Sanity check (find the cpplint executable)
   find_program(cpplint_program cpplint)
-  if(NOT cpplint_program)
+  if(cpplint_program)
+    loco_message("[cpplint] found at ${cpplint_program}" STATUS)
+
+    # -----------------------------------
+    # Define default values in case the user didn't provide them. For all valid
+    # options check use `cpplint --help` in your terminal of choice :)
+    loco_validate_with_default(cpplint_QUIET TRUE)
+    loco_validate_with_default(cpplint_COUNTING "total")
+    loco_validate_with_default(cpplint_VERBOSITY 0)
+    loco_validate_with_default(cpplint_LINE_LENGTH 80)
+    loco_validate_with_default(cpplint_EXCLUDES "")
+    loco_validate_with_default(cpplint_FILTERS "")
+    loco_validate_with_default(cpplint_EXTRA_ARGS "")
+
+    # cmake-format: off
+    # -----------------------------------
+    # Tell CMake to use cpplint with the given configuration
+    set(CMAKE_CXX_CPPLINT
+        ${cpplint_program}
+        --counting=${cpplint_COUNTING}
+        --verbose=${cpplint_VERBOSITY}
+        --linelength=${cpplint_LINE_LENGTH})
+    # cmake-format: on
+
+    # -----------------------------------
+    # If quiet is given, don't complain for warnings
+    if(cpplint_QUIET)
+      list(APPEND CMAKE_CXX_CPPLINT --quiet)
+    endif()
+
+    # -----------------------------------
+    # Add --exclude=cpplint_EXCLUDES[i] for i in num-excludes
+    if(NOT "${cpplint_EXCLUDES}" STREQUAL "")
+      foreach(exclude_path IN LISTS cpplint_EXCLUDES)
+        list(APPEND CMAKE_CXX_CPPLINT --exclude=${exclude_path})
+      endforeach()
+    endif()
+
+    # ---------------------------------
+    # Add --filter=cpplint_FILTERS[i] for i in num-filters
+    if(NOT "${cpplint_FILTERS}" STREQUAL "")
+      foreach(filter IN LISTS cpplint_FILTERS)
+        list(APPEND CMAKE_CXX_CPPLINT --filter=${filter})
+      endforeach()
+    endif()
+
+    # ---------------------------------
+    # Add all extra-arguments given by the user
+    if(NOT "${cpplint_EXTRA_ARGS}" STREQUAL "")
+      list(APPEND CMAKE_CXX_CPPLINT "${cpplint_EXTRA_ARGS}")
+    endif()
+
+    # -----------------------------------
+    # Print the whole line representing the command
+    loco_message("[cpplint]: ${CMAKE_CXX_CPPLINT}")
+  else()
     loco_message("[cpplint] could not be found :(" WARNING)
-    return()
   endif()
-  loco_message("[cpplint] found at ${cpplint_program}" STATUS)
-
-  # -----------------------------------
-  # Define default values in case the user didn't provide them. For all valid
-  # options check use `cpplint --help` in your terminal of choice :)
-  loco_validate_with_default(cpplint_QUIET TRUE)
-  loco_validate_with_default(cpplint_COUNTING "total")
-  loco_validate_with_default(cpplint_VERBOSITY 0)
-  loco_validate_with_default(cpplint_LINE_LENGTH 80)
-  loco_validate_with_default(cpplint_EXCLUDES "")
-  loco_validate_with_default(cpplint_FILTERS "")
-  loco_validate_with_default(cpplint_EXTRA_ARGS "")
-
-  # cmake-format: off
-  # -----------------------------------
-  # Tell CMake to use cpplint with the given configuration
-  set(CMAKE_CXX_CPPLINT
-      ${cpplint_program}
-      --counting=${cpplint_COUNTING}
-      --verbose=${cpplint_VERBOSITY}
-      --linelength=${cpplint_LINE_LENGTH})
-  # cmake-format: on
-
-  # -----------------------------------
-  # If quiet is given, don't complain for warnings
-  if(cpplint_QUIET)
-    list(APPEND CMAKE_CXX_CPPLINT --quiet)
-  endif()
-
-  # -----------------------------------
-  # Add --exclude=cpplint_EXCLUDES[i] for i in num-excludes
-  if(NOT "${cpplint_EXCLUDES}" STREQUAL "")
-    foreach(exclude_path IN LISTS cpplint_EXCLUDES)
-      list(APPEND CMAKE_CXX_CPPLINT --exclude=${exclude_path})
-    endforeach()
-  endif()
-
-  # ---------------------------------
-  # Add --filter=cpplint_FILTERS[i] for i in num-filters
-  if(NOT "${cpplint_FILTERS}" STREQUAL "")
-    foreach(filter IN LISTS cpplint_FILTERS)
-      list(APPEND CMAKE_CXX_CPPLINT --filter=${filter})
-    endforeach()
-  endif()
-
-  # ---------------------------------
-  # Add all extra-arguments given by the user
-  if(NOT "${cpplint_EXTRA_ARGS}" STREQUAL "")
-    list(APPEND CMAKE_CXX_CPPLINT "${cpplint_EXTRA_ARGS}")
-  endif()
-
-  # -----------------------------------
-  # Print the whole line representing the command
-  loco_message("cpplint-linter> ${CMAKE_CXX_CPPLINT}")
 
 endmacro()
 
@@ -298,56 +298,57 @@ macro(loco_setup_cppcheck)
   # -----------------------------------
   # Sanity check (find the cppcheck executable)
   find_program(cppcheck_program cppcheck)
-  if(NOT cppcheck_program)
+  if(cppcheck_program)
+    loco_message("[cppcheck] found at ${cppcheck_program}" STATUS)
+
+    # -----------------------------------
+    # Define default values if the user doesn't provide them
+    if(CMAKE_GENERATOR MATCHES ".*Visual Studio.*")
+      set(cppcheck_TEMPLATE "vs")
+    else()
+      loco_validate_with_default(cppcheck_TEMPLATE "gcc")
+    endif()
+    if(NOT CMAKE_CXX_STANDARD)
+      loco_validate_with_default(cppcheck_CXX_STANDARD "c++11")
+    else()
+      loco_validate_with_default(cppcheck_CXX_STANDARD
+                                 "c++${CMAKE_CXX_STANDARD}")
+    endif()
+    loco_validate_with_default(cppcheck_WARNINGS_AS_ERRORS FALSE)
+    loco_validate_with_default(cppcheck_EXTRA_ARGS "")
+
+    # cmake-format: off
+    # -----------------------------------
+    # Tell CMake to use cppcheck (and pass extra-args if given)
+    set(CMAKE_CXX_CPPCHECK
+        ${cppcheck_program}
+        --template=${cppcheck_TEMPLATE}
+        --std=${cppcheck_CXX_STANDARD}
+        --enable=style,performance,warning,portability
+        --inline-suppr
+        --suppress=internalAstError
+        --suppress=unmatchedSuppression
+        --inconclusive)
+    # cmake-format: on
+
+    # -----------------------------------
+    # Add any extra arguments if given by the user :)
+    if(NOT "${cppcheck_EXTRA_ARGS}" STREQUAL "")
+      list(APPEND CMAKE_CXX_CPPCHECK "${cppcheck_EXTRA_ARGS}")
+    endif()
+
+    # -----------------------------------
+    # Treat warnings as errors if the users says so
+    if(cppcheck_WARNINGS_AS_ERRORS)
+      list(APPEND CMAKE_CXX_CPPCHECK --error-exitcode=2)
+    endif()
+
+    # -----------------------------------
+    # Print the whole line representing the command
+    loco_message("[cppcheck]: ${CMAKE_CXX_CPPCHECK}")
+  else()
     loco_message("[cppcheck] could not be found :(" WARNING)
-    return()
   endif()
-  loco_message("[cppcheck] found at ${cppcheck_program}" STATUS)
-
-  # -----------------------------------
-  # Define default values if the user doesn't provide them
-  if(CMAKE_GENERATOR MATCHES ".*Visual Studio.*")
-    set(cppcheck_TEMPLATE "vs")
-  else()
-    loco_validate_with_default(cppcheck_TEMPLATE "gcc")
-  endif()
-  if(NOT CMAKE_CXX_STANDARD)
-    loco_validate_with_default(cppcheck_CXX_STANDARD "c++11")
-  else()
-    loco_validate_with_default(cppcheck_CXX_STANDARD "c++${CMAKE_CXX_STANDARD}")
-  endif()
-  loco_validate_with_default(cppcheck_WARNINGS_AS_ERRORS FALSE)
-  loco_validate_with_default(cppcheck_EXTRA_ARGS "")
-
-  # cmake-format: off
-  # -----------------------------------
-  # Tell CMake to use cppcheck (and pass extra-args if given)
-  set(CMAKE_CXX_CPPCHECK
-      ${cppcheck_program}
-      --template=${cppcheck_TEMPLATE}
-      --std=${cppcheck_CXX_STANDARD}
-      --enable=style,performance,warning,portability
-      --inline-suppr
-      --suppress=internalAstError
-      --suppress=unmatchedSuppression
-      --inconclusive)
-  # cmake-format: on
-
-  # -----------------------------------
-  # Add any extra arguments if given by the user :)
-  if(NOT "${cppcheck_EXTRA_ARGS}" STREQUAL "")
-    list(APPEND CMAKE_CXX_CPPCHECK "${cppcheck_EXTRA_ARGS}")
-  endif()
-
-  # -----------------------------------
-  # Treat warnings as errors if the users says so
-  if(cppcheck_WARNINGS_AS_ERRORS)
-    list(APPEND CMAKE_CXX_CPPCHECK --error-exitcode=2)
-  endif()
-
-  # -----------------------------------
-  # Print the whole line representing the command
-  loco_message("cppcheck-linter> ${CMAKE_CXX_CPPCHECK}")
 
 endmacro()
 
