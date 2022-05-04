@@ -99,6 +99,7 @@ function(loco_initialize_project)
     if(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
       set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL
             "Create compile_commands.json for static-analyzers to use " FORCE)
+      _loco_copy_compile_database_to_root()
       loco_message("Exporting compile_commands.json for static-analyzers")
     endif()
 
@@ -183,4 +184,30 @@ function(_loco_check_compiler)
     loco_message("Using CXX compiler [${CMAKE_CXX_COMPILER_ID}]")
   endif()
 
+endfunction()
+
+# ~~~
+# _loco_copy_compile_database_to_root()
+#
+# Copies the compile_commands.json file from the build to the root-source folder
+#
+# Reference: (adapted from this stack-overflow post)
+# * "copy-compile-commands-json-to-project-root-folder" @ stack-overflow
+# ~~~
+function(_loco_copy_compile_database_to_root)
+  # Target for copying the compile-database
+  add_custom_target(
+    compile_database_copy ALL
+    DEPENDS ${CMAKE_SOURCE_DIR}/compile_commands.json
+    COMMENT "Compile-database-copy target")
+
+  # Command issued to copy (if changed) the compile-database
+  add_custom_command(
+    OUTPUT ${CMAKE_SOURCE_DIR}/compile_commands.json
+    COMMAND
+      ${CMAKE_COMMAND} -E copy_if_different
+      ${CMAKE_BINARY_DIR}/compile_commands.json
+      ${CMAKE_SOURCE_DIR}/compile_commands.json
+    DEPENDS ${CMAKE_BINARY_DIR}/compile_commands.json
+    COMMENT "Compile-database-copy command")
 endfunction()
