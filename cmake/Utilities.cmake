@@ -322,24 +322,22 @@ macro(loco_setup_cppcheck)
   # cmake-format: off
   # -----------------------------------
   # Tell CMake to use cppcheck (and pass extra-args if given)
-  if("${cppcheck_EXTRA_ARGS}" STREQUAL "")
-    set(CMAKE_CXX_CPPCHECK
-        ${cppcheck_program}
-        --template=${cppcheck_TEMPLATE}
-        --std=${cppcheck_CXX_STANDARD}
-        --enable=style,performance,warning,portability
-        --inline-suppr
-        --suppress=internalAstError
-        --suppress=unmatchedSuppression
-        --inconclusive)
-  else()
-    set(CMAKE_CXX_CPPCHECK
-        ${cppcheck_program}
-        --template=${cppcheck_TEMPLATE}
-        --std=${cppcheck_CXX_STANDARD}
-        ${cppcheck_EXTRA_ARGS})
-  endif()
+  set(CMAKE_CXX_CPPCHECK
+      ${cppcheck_program}
+      --template=${cppcheck_TEMPLATE}
+      --std=${cppcheck_CXX_STANDARD}
+      --enable=style,performance,warning,portability
+      --inline-suppr
+      --suppress=internalAstError
+      --suppress=unmatchedSuppression
+      --inconclusive)
   # cmake-format: on
+
+  # -----------------------------------
+  # Add any extra arguments if given by the user :)
+  if(NOT "${cppcheck_EXTRA_ARGS}" STREQUAL "")
+    list(APPEND CMAKE_CXX_CPPCHECK "${cppcheck_EXTRA_ARGS}")
+  endif()
 
   # -----------------------------------
   # Treat warnings as errors if the users says so
