@@ -195,6 +195,11 @@ endfunction()
 # * "copy-compile-commands-json-to-project-root-folder" @ stack-overflow
 # ~~~
 function(_loco_copy_compile_database_to_root)
+  # In case of windows+msvc, there's no compile_commands.json generated for us
+  if(MSVC)
+    return()
+  endif()
+
   # Target for copying the compile-database
   add_custom_target(
     compile_database_copy ALL
