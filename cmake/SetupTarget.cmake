@@ -70,6 +70,44 @@ set(GCC_BASE_WARNINGS
 # cmake-format: on
 
 # ~~~
+# loco_create_target(<target_name> <target_type>
+#       [SOURCES <sources>...]
+#       [INCLUDE_DIRECTORIES <include-dirs>...]
+#       [TARGET_DEPENDENCIES <target-dependencies>...]
+#       [WARNINGS_AS_ERRORS <Werror>]
+#       [CLANG_WARNINGS <clang-warnings>...]
+#       [GCC_WARNINGS <gcc-warnings>...]
+#       [MSVC_WARNINGS <msvc-warnings>...]
+#       [CXX_STANDARD <cxx-standard>]
+#       [ENABLE_SIMD <enable-simd>]
+#       [ENABLE_SSE <enable-simd-sse>]
+#       [ENABLE_AVX <enable-simd-avx])
+#
+# Creates and configures a target given the provided properties. This is just a
+# shorthand for `add_library` followed by `loco_setup_target`
+# ~~~
+macro(loco_create_target target_name target_type)
+  if(${target_type} STREQUAL "EXECUTABLE")
+    add_executable(${target_name})
+  elseif(${target_type} STREQUAL "SHARED")
+    add_library(${target_name} SHARED)
+  elseif(${target_type} STREQUAL "STATIC")
+    add_library(${target_name} STATIC)
+  elseif(${target_type} STREQUAL "INTERFACE")
+    add_library(${target_name} INTERFACE)
+  else()
+    loco_message(
+      "Couldn't create target='${target_name}' of type='${target_type}'.\
+      Valid types are: 'EXECUTABLE, SHARED, STATIC, INTERFACE'" LOG_LEVEL
+      FATAL_ERROR)
+  endif()
+
+  # -----------------------------------
+  # Delegate to the helper setup macro :)
+  loco_setup_target(${target_name} ${ARGN})
+endmacro()
+
+# ~~~
 # loco_setup_target(<target>
 #       [SOURCES <sources>...]
 #       [INCLUDE_DIRECTORIES <include-dirs>...]
