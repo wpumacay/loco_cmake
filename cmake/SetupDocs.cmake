@@ -3,98 +3,95 @@
 include_guard()
 
 # ~~~
-# _loco_setup_doxygen(
-#       [TARGET <target>]
-#       [DOXYGEN_INPUT_DIR <path-doxygen-input-dir>]
-#       [DOXYGEN_OUTPUT_DIR <path-doxygen-output-dir>]
+# _loco_setup_doxygen(<target-handle>
 #       [DOXYGEN_OUT_INDEX <path-doxygen-index>]
 #       [DOXYFILE_IN <path-doxyfile-in>]
 #       [DOXYFILE_OUT <path-doxyfile-out>]
 #       [VERBOSE <verbose>])
 #
-# Configures `Doxygen` for generating docs for a given target (or custom user
-# configuration given by the INPUT and OUTPUT directories). If `Doxygen` is
-# found, then the cache variable LOCO_CMAKE_HAS_DOXYGEN is set to TRUE; and set
-# to FALSE otherwise (can't find via `find_package(Doxygen)`)
+# Configures `Doxygen` for generating docs for a given target. If the setup
+# process succeeds then the cache variable `LOCO_${proj_name_upper}_HAS_DOXYGEN`
+# is set to `TRUE`; otherwise, it's set to `FALSE`. Notice that we're assumming
+# that the user provides us with a "proper" target (i.e. the include headers can
+# be extracted from the include dirs, set by `target_include_directories`).
 #
 # ~~~
-function(_loco_setup_doxygen)
+function(_loco_setup_doxygen target_handle)
   string(TOUPPER ${PROJECT_NAME} proj_name_upper)
-  set(cache_status_varname LOCO_${proj_name_upper}_HAS_DOXYGEN)
+  set(cache_status_var LOCO_${proj_name_upper}_HAS_DOXYGEN)
+
+  # -----------------------------------
+  # Sanity check: we're expecting a target from the user
+  if(NOT TARGET ${target_handle})
+    loco_message(
+      "Expected a valid target, but got '${target_handle}', which is not :("
+      LOG_LEVEL WARNING)
+    _cache_doxygen_setup_status(${cache_status_var} FALSE
+                                "User must provide a valid target :(")
+    return()
+  endif()
+
   # -----------------------------------
   # Sanity check: Make sure we have Doxygen installed in our system
   find_package(Doxygen QUIET)
   if(NOT DOXYGEN_FOUND)
     loco_message("Couldn't find 'Doxygen', which is required to generate the "
                  \ "first pass of C/C++ docs generation" LOG_LEVEL WARNING)
-    _loco_cache_status_variable(
-      ${cache_status_varname} FALSE
-      "No Doxygen found while configuring the project '${PROJECT_NAME}'")
+    _cache_doxygen_setup_status(
+      ${cache_status_var} FALSE
+      "Doxygen wasn't found while configuring the project '${PROJECT_NAME}'")
     return()
+  else()
+    loco_message("Doxygen version='${DOXYGEN_VERSION}' found in your system :)"
+                 LOG_LEVEL STATUS)
   endif()
-  _loco_cache_status_variable(
-    ${cache_status_varname} TRUE
-    "Doxygen found in your system, with version '${DOXYGEN_VERSION}'")
-
-  set(options)
-  set(one_value_args "TARGET" "DOXYGEN_INPUT_DIR" "DOXYGEN_OUTPUT_DIR"
-                     "DOXYFILE_IN" "DOXYFILE_OUT" "DOXYGEN_OUT_INDEX" "VERBOSE")
-  set(multi_value_args "")
-  cmake_parse_arguments(setup "${options}" "${one_value_args}"
-                        "${multi_value_args}" ${ARGN})
 
   # -----------------------------------
-  # Make sure we have a valid configuration given by the user
-  if((NOT TARGET ${setup_TARGET}) AND ((NOT setup_DOXYGEN_INPUT_DIR)
-                                       OR (NOT setup_DOXYGEN_OUTPUT_DIR)))
-    loco_message("Must provide either single 'target' or both 'input'" \
-                 " and 'output' doxygen directories" LOG_LEVEL WARNING)
-    _loco_cache_status_variable(${cache_status_varname} FALSE
-                                "User must provide valid configuration :(")
+  set(one_value_args "TARGET" "DOXYFILE_IN" "DOXYFILE_OUT" "DOXYGEN_OUT_INDEX"
+                     "VERBOSE")
+  cmake_parse_arguments(setup "" "${one_value_args}" "" ${ARGN})
+
+  # -----------------------------------
+  # The user gave us a valid target :D. We'll get the include directory from the
+  # target itself. Recall that we're assumming INCLUDE_DIRECTORIES is set via
+  # `target_include_directories` when configuring the target :)
+  get_target_property(target_type ${setup_TARGET} TYPE)
+  if(${target_type} STREQUAL "LIBRARY")
+    get_target_property(target_include_dirs ${setup_TARGET} INCLUDE_DIRECTORIES)
+  elseif(${target_type} STREQUAL "INTERFACE_LIBRARY")
+    get_target_property(target_include_dirs ${setup_TARGET}
+                        INTERFACE_INCLUDE_DIRECTORIES)
+  else()
+    loco_message(
+      "It seems the given target '${setup_TARGET}' doesn't expose any" \
+      " include directories. Stopping docs-generation :(" LOG_LEVEL WARNING)
+    _cache_doxygen_setup_status(
+      ${cache_status_var} FALSE
+      "Given target doesn't provide include directories info")
     return()
   endif()
 
-  if(TARGET ${setup_TARGET})
-    # The user gave us a valid target :D. In this mode, we'll get the include
-    # directory from the target itself. We're assumming the INCLUDE_DIRECTORIES
-    # set via `target_include_directories` was used to configure this target :)
-    get_target_property(doxygen_target_type ${setup_TARGET} TYPE)
-    if(${doxygen_target_type} STREQUAL "LIBRARY")
-      get_target_property(doxygen_target_include_dirs ${setup_TARGET}
-                          INCLUDE_DIRECTORIES)
-    elseif(${doxygen_target_type} STREQUAL "INTERFACE_LIBRARY")
-      get_target_property(doxygen_target_include_dirs ${setup_TARGET}
-                          INTERFACE_INCLUDE_DIRECTORIES)
-    else()
-      loco_message(
-        "It seems the given target '${setup_TARGET}' doesn't expose any" \
-        " include directories. Stopping docs-generation :(" LOG_LEVEL WARNING)
-      _loco_cache_status_variable(
-        ${cache_status_varname} FALSE
-        "Given target doesn't provide include-directories")
-      return()
-    endif()
-
-    # Set the INPUT dir according to the target-includes
-    set(DOXYGEN_INPUT_DIR "${doxygen_target_include_dirs}")
-    # Set the OUTPUT dir to a fixed location (@todo: reuse OUTPUT_DIR if given)
-    set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen")
-  elseif((NOT setup_DOXYGEN_INPUT_DIR STREQUAL "")
-         AND (NOT setup_DOXYGEN_OUTPUT_DIR STREQUAL ""))
-    # The user gave us both valid INPUT and OUTPUT directories, so fingers
-    # crossed T_T' (@todo: validate the path or just assume user not trolling)
-    set(DOXYGEN_INPUT_DIR "${setup_DOXYGEN_INPUT_DIR}")
-    set(DOXYGEN_OUTPUT_DIR "${setup_DOXYGEN_OUTPUT_DIR}")
-  else()
-    loco_message("Wtf?!. Shouldn't get here o.O'" LOG_LEVEL FATAL_ERROR)
-  endif()
+  # -----------------------------------
+  # These variables are later replaced in the Doxyfile.in (@@ placeholder refs)
+  set(DOXYGEN_INPUT_DIR "${target_include_dirs}")
+  set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen")
 
   # -----------------------------------
   # Grab all header files whose docs we will generate
-  file(GLOB_RECURSE doxygen_include_files "${DOXYGEN_INPUT_DIR}/*.hpp")
+  file(GLOB_RECURSE doxygen_header_files "${DOXYGEN_INPUT_DIR}/*.hpp")
+  # Sanity check: should have at least one file to get docs from
+  list(LENGTH doxygen_header_files num_header_files)
+  if(num_header_files LESS 1)
+    loco_message("It seems there are no header files (.hpp) associated with the"
+                 \ " given target '${target_handle}' :(" LOG_LEVEL WARNING)
+    _cache_doxygen_setup_status(
+      ${cache_status_var} FALSE
+      "No .hpp files were found associated with the provided target :(")
+    return()
+  endif()
 
   # -----------------------------------
-  # Keep configuring (if not given by the user, use some appropriate defaults)
+  # Keep configuring (if not given by the user, use some reasonable defaults)
   loco_validate_with_default(setup_DOXYGEN_OUT_INDEX
                              "${doxygen_output_dir}/html/index.html")
   loco_validate_with_default(setup_DOXYFILE_IN
@@ -109,26 +106,34 @@ function(_loco_setup_doxygen)
   # Replace variables in between @@ on the Doxyfile.in with the actual values
   configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
 
+  # cmake-format: off
   # -----------------------------------
-  # Make a custom command to handle the Doxygen invocation
-  # ~~~
-  # add_custom_command(
-  #  OUTPUT ${DOXYGEN_OUT_INDEX}
-  #  DEPENDS ${doxygen_include_files}
-  #  COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-  #  )
-  # ~~~
+  # Handle Doxygen invocation to generate XML-docs
+  add_custom_command(
+    OUTPUT ${DOXYGEN_OUT_INDEX}
+    DEPENDS ${doxygen_header_files}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
+    MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
+    COMMENT "Configuring docs-generation using 'Doxygen'")
+  # cmake-lint: disable=C0113
+  add_custom_target(
+    ${target_handle}DocsDoxygen ALL DEPENDS ${DOXYGEN_OUT_INDEX})
+  # cmake-format: on
 
+  _cache_doxygen_setup_status(
+    ${cache_status_var} TRUE
+    "'Doxygen' successfully configured for docs-generation" \
+    " for target '${target_handle}'")
 endfunction()
 
 # ~~~
-# _loco_cache_status_variable(<var_name> <var_value> <cache_message>)
+# _cache_doxygen_setup_status(<var_name> <var_value> <cache_message>)
 #
 # Sets a status variable with the given `var_name` in the internal global cache
 # with the given `var_value`, and corresponding `cache_message`
 # ~~~
-macro(_loco_cache_status_variable var_name var_value cache_message)
-  set(${var_name}
-      ${var_value}
-      CACHE INTERNAL "${cache_message}" FORCE)
+macro(_cache_doxygen_setup_status var_name var_value cache_message)
+  # cmake-format: off
+  set(${var_name} ${var_value} CACHE BOOL "${cache_message}" FORCE)
+  # cmake-format: on
 endmacro()
