@@ -35,8 +35,8 @@ function(_loco_setup_doxygen target_handle)
   # Sanity check: Make sure we have Doxygen installed in our system
   find_package(Doxygen QUIET)
   if(NOT DOXYGEN_FOUND)
-    loco_message("Couldn't find 'Doxygen', which is required to generate the "
-                 \ "first pass of C/C++ docs generation" LOG_LEVEL WARNING)
+    loco_message("Couldn't find 'Doxygen', which is required to generate the \"
+                  first pass of C/C++ docs generation" LOG_LEVEL WARNING)
     _cache_doxygen_setup_status(
       ${cache_status_var} FALSE
       "Doxygen wasn't found while configuring the project '${PROJECT_NAME}'")
@@ -62,9 +62,6 @@ function(_loco_setup_doxygen target_handle)
     get_target_property(target_include_dirs ${setup_TARGET}
                         INTERFACE_INCLUDE_DIRECTORIES)
   else()
-    loco_message(
-      "It seems the given target '${setup_TARGET}' doesn't expose any" \
-      " include directories. Stopping docs-generation :(" LOG_LEVEL WARNING)
     _cache_doxygen_setup_status(
       ${cache_status_var} FALSE
       "Given target doesn't provide include directories info")
@@ -82,8 +79,8 @@ function(_loco_setup_doxygen target_handle)
   # Sanity check: should have at least one file to get docs from
   list(LENGTH doxygen_header_files num_header_files)
   if(num_header_files LESS 1)
-    loco_message("It seems there are no header files (.hpp) associated with the"
-                 \ " given target '${target_handle}' :(" LOG_LEVEL WARNING)
+    loco_message("It seems there are no header files (hpp) associated with the\"
+                 given target '${target_handle}' :(" LOG_LEVEL WARNING)
     _cache_doxygen_setup_status(
       ${cache_status_var} FALSE
       "No .hpp files were found associated with the provided target :(")
@@ -121,9 +118,8 @@ function(_loco_setup_doxygen target_handle)
   # cmake-format: on
 
   _cache_doxygen_setup_status(
-    ${cache_status_var} TRUE
-    "'Doxygen' successfully configured for docs-generation" \
-    " for target '${target_handle}'")
+    ${cache_status_var} TRUE "'Doxygen' successfully configured for \
+    docs-generation for target '${target_handle}'")
 endfunction()
 
 # ~~~

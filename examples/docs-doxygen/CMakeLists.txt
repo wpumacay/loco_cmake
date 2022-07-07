@@ -16,15 +16,10 @@ loco_initialize_project()
 # -------------------------------------
 # Create a simple library with some docstrings :)
 loco_create_target(
-    GeometricUtils SHARED
+    ZooCpp SHARED
     SOURCES
-        ${CMAKE_SOURCE_DIR}/impl/types_impl.hpp
-        ${CMAKE_SOURCE_DIR}/impl/helpers2d_impl.hpp
-        ${CMAKE_SOURCE_DIR}/impl/helpers3d_impl.hpp
-        ${CMAKE_SOURCE_DIR}/src/types.cpp
-        ${CMAKE_SOURCE_DIR}/src/helpers2d.cpp
-        ${CMAKE_SOURCE_DIR}/src/helpers3d.cpp
+        ${CMAKE_SOURCE_DIR}/source/animal.cpp
     INCLUDE_DIRECTORIES
-        ${CMAKE_SOURCE_DIR}/inc
+        ${CMAKE_SOURCE_DIR}/include
 )
 # cmake-format: on

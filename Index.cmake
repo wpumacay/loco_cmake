@@ -34,7 +34,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/Utilities.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/CheckSIMD.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupProject.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupTarget.cmake")
-# include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupDocs.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/SetupDocs.cmake")
 
 # -------------------------------------
 # On success, just show our project mascot
