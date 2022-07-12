@@ -4,3 +4,6 @@ cpplint
 yamllint
 pylint
 black
+sphinx
+sphinx_rtd_theme
+breathe

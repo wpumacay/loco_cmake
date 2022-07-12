@@ -17,6 +17,7 @@ include_guard()
 #
 # ~~~
 function(_loco_setup_doxygen target_handle)
+  # cmake-lint: disable=R0915
   string(TOUPPER ${PROJECT_NAME} proj_name_upper)
   set(cache_status_var LOCO_${proj_name_upper}_HAS_DOXYGEN)
 
@@ -36,7 +37,7 @@ function(_loco_setup_doxygen target_handle)
   find_package(Doxygen QUIET)
   if(NOT DOXYGEN_FOUND)
     loco_message("Couldn't find 'Doxygen', which is required to generate the \"
-                  first pass of C/C++ docs generation" LOG_LEVEL WARNING)
+                  first pass of C/C++ docs generation" LOG_LEVEL ERROR)
     _cache_doxygen_setup_status(
       ${cache_status_var} FALSE
       "Doxygen wasn't found while configuring the project '${PROJECT_NAME}'")
@@ -47,31 +48,64 @@ function(_loco_setup_doxygen target_handle)
   endif()
 
   # -----------------------------------
-  set(one_value_args "TARGET" "DOXYFILE_IN" "DOXYFILE_OUT" "DOXYGEN_OUT_INDEX"
-                     "VERBOSE")
+  set(one_value_args
+      "DOXYGEN_FILE_IN" "DOXYGEN_OUTPUT_DIR" "DOXYGEN_GENERATE_HTML"
+      "DOXYGEN_GENERATE_XML" "DOXYGEN_GENERATE_LATEX" "DOXYGEN_QUIET")
   cmake_parse_arguments(setup "" "${one_value_args}" "" ${ARGN})
 
   # -----------------------------------
   # The user gave us a valid target :D. We'll get the include directory from the
   # target itself. Recall that we're assumming INCLUDE_DIRECTORIES is set via
   # `target_include_directories` when configuring the target :)
-  get_target_property(target_type ${setup_TARGET} TYPE)
-  if(${target_type} STREQUAL "LIBRARY")
-    get_target_property(target_include_dirs ${setup_TARGET} INCLUDE_DIRECTORIES)
-  elseif(${target_type} STREQUAL "INTERFACE_LIBRARY")
-    get_target_property(target_include_dirs ${setup_TARGET}
+  get_target_property(target_type ${target_handle} TYPE)
+  if(${target_type} MATCHES "LIBRARY")
+    get_target_property(target_include_dirs ${target_handle}
+                        INCLUDE_DIRECTORIES)
+  elseif(${target_type} MATCHES "INTERFACE_LIBRARY")
+    get_target_property(target_include_dirs ${target_handle}
                         INTERFACE_INCLUDE_DIRECTORIES)
   else()
+    loco_message("Given target doesn't provide include-directories info"
+                 LOG_LEVEL WARNING)
     _cache_doxygen_setup_status(
       ${cache_status_var} FALSE
-      "Given target doesn't provide include directories info")
+      "Given target doesn't provide include-directories info")
+    return()
+  endif()
+
+  # ------------------------------------
+  # Set some sensible defaults
+  loco_validate_with_default(setup_DOXYGEN_FILE_IN
+                             ${PROJECT_SOURCE_DIR}/docs/Doxyfile.in)
+  loco_validate_with_default(setup_DOXYGEN_OUTPUT_DIR
+                             ${PROJECT_BINARY_DIR}/docs)
+  loco_validate_with_default(setup_DOXYGEN_GENERATE_HTML TRUE)
+  loco_validate_with_default(setup_DOXYGEN_GENERATE_LATEX TRUE)
+  loco_validate_with_default(setup_DOXYGEN_GENERATE_XML TRUE)
+  loco_validate_with_default(setup_DOXYGEN_QUIET TRUE)
+
+  # -----------------------------------
+  # Should generate at least one artifact (html|latex|xml)
+  if((NOT setup_DOXYGEN_GENERATE_HTML)
+     AND (NOT setup_DOXYGEN_GENERATE_LATEX)
+     AND (NOT setup_DOXYGEN_GENERATE_XML))
+    loco_message(
+      "At least one generated artifact should be enabled (html|latex|xml)")
+    _cache_doxygen_setup_status(
+      ${cache_status_var} FALSE
+      "At least one generated artifact should be enabled (html|latex|xml)")
     return()
   endif()
 
   # -----------------------------------
   # These variables are later replaced in the Doxyfile.in (@@ placeholder refs)
+  set(DOXYGEN_PROJECT_NAME ${PROJECT_NAME})
   set(DOXYGEN_INPUT_DIR "${target_include_dirs}")
-  set(DOXYGEN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen")
+  set(DOXYGEN_OUTPUT_DIR ${setup_DOXYGEN_OUTPUT_DIR})
+  set(DOXYGEN_GENERATE_HTML ${setup_DOXYGEN_GENERATE_HTML})
+  set(DOXYGEN_GENERATE_LATEX ${setup_DOXYGEN_GENERATE_LATEX})
+  set(DOXYGEN_GENERATE_XML ${setup_DOXYGEN_GENERATE_XML})
+  set(DOXYGEN_QUIET ${setup_DOXYGEN_QUIET})
 
   # -----------------------------------
   # Grab all header files whose docs we will generate
@@ -88,35 +122,40 @@ function(_loco_setup_doxygen target_handle)
   endif()
 
   # -----------------------------------
-  # Keep configuring (if not given by the user, use some reasonable defaults)
-  loco_validate_with_default(setup_DOXYGEN_OUT_INDEX
-                             "${doxygen_output_dir}/html/index.html")
-  loco_validate_with_default(setup_DOXYFILE_IN
-                             "${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in")
-  loco_validate_with_default(setup_DOXYFILE_OUT
-                             "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile")
-  set(DOXYGEN_OUT_INDEX ${setup_DOXYGEN_OUT_INDEX})
-  set(DOXYFILE_IN ${setup_DOXYFILE_IN})
-  set(DOXYFILE_OUT ${setup_DOXYFILE_OUT})
+  set(doxyfile_in ${setup_DOXYGEN_FILE_IN})
+  set(doxyfile_out ${setup_DOXYGEN_OUTPUT_DIR}/Doxyfile)
+  set(doxygen_artifacts "")
+  if(DOXYGEN_GENERATE_HTML)
+    list(APPEND doxygen_artifacts ${setup_DOXYGEN_OUTPUT_DIR}/html/index.html)
+  endif()
+  if(DOXYGEN_GENERATE_LATEX)
+    list(APPEND doxygen_artifacts ${setup_DOXYGEN_OUTPUT_DIR}/latex/files.tex)
+  endif()
+  if(DOXYGEN_GENERATE_XML)
+    list(APPEND doxygen_artifacts ${setup_DOXYGEN_OUTPUT_DIR}/xml/index.xml)
+  endif()
   # Create the output directory (just in case not created yet)
-  file(MAKE_DIRECTORY ${DOXYGEN_OUTPUT_DIR})
+  file(MAKE_DIRECTORY ${setup_DOXYGEN_OUTPUT_DIR})
   # Replace variables in between @@ on the Doxyfile.in with the actual values
-  configure_file(${DOXYFILE_IN} ${DOXYFILE_OUT} @ONLY)
+  configure_file(${setup_DOXYGEN_FILE_IN} ${setup_DOXYGEN_OUTPUT_DIR}/Doxyfile
+                 @ONLY)
 
   # cmake-format: off
   # -----------------------------------
   # Handle Doxygen invocation to generate XML-docs
   add_custom_command(
-    OUTPUT ${DOXYGEN_OUT_INDEX}
+    OUTPUT ${doxygen_artifacts}
     DEPENDS ${doxygen_header_files}
-    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUT}
-    MAIN_DEPENDENCY ${DOXYFILE_OUT} ${DOXYFILE_IN}
-    COMMENT "Configuring docs-generation using 'Doxygen'")
+    COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile_out}
+    MAIN_DEPENDENCY ${doxyfile_out} ${doxyfile_in}
+    COMMENT "Configuring docs-generation using 'Doxygen...'")
   # cmake-lint: disable=C0113
   add_custom_target(
-    ${target_handle}DocsDoxygen ALL DEPENDS ${DOXYGEN_OUT_INDEX})
+    ${target_handle}DocsDoxygen ALL DEPENDS ${doxygen_artifacts})
   # cmake-format: on
 
+  loco_message("Successfully configured Doxygen docs generations for\
+    artifacts ${doxygen_artifacts}")
   _cache_doxygen_setup_status(
     ${cache_status_var} TRUE "'Doxygen' successfully configured for \
     docs-generation for target '${target_handle}'")
