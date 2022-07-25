@@ -6,7 +6,7 @@ include("../../Index.cmake")
 
 # -------------------------------------
 # Define the project
-project(ExampleDoxygenDocs VERSION 1.0.0)
+project(ExampleSphinxDocs VERSION 1.0.0)
 
 # -------------------------------------
 # Initialize the project (bare-minimum setup)
@@ -26,12 +26,8 @@ loco_create_target(
 
 # cmake-format: off
 # -------------------------------------
-# Initialize the docs (using doxygen only)
-loco_setup_cppdocs_doxygen(ZooCpp
-    DOXYGEN_FILE_IN ${CMAKE_SOURCE_DIR}/docs/Doxyfile.in
-    DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/
-    DOXYGEN_GENERATE_HTML TRUE
-    DOXYGEN_GENERATE_LATEX TRUE
-    DOXYGEN_GENERATE_XML TRUE
-    DOXYGEN_QUIET TRUE)
+# Initialize the documentation (doxygen + sphinx + breathe)
+loco_setup_cppdocs_sphinx(ZooCpp
+    SPHINX_INPUT_DIR ${CMAKE_SOURCE_DIR}/docs/
+    SPHINX_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/)
 # cmake-format: on

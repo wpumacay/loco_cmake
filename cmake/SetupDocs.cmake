@@ -3,23 +3,22 @@
 include_guard()
 
 # ~~~
-# _loco_setup_doxygen(<target-handle>
-#       [DOXYGEN_OUT_INDEX <path-doxygen-index>]
-#       [DOXYFILE_IN <path-doxyfile-in>]
-#       [DOXYFILE_OUT <path-doxyfile-out>]
-#       [VERBOSE <verbose>])
+# loco_setup_cppdocs_doxygen(<target-handle>
+#       [DOXYGEN_FILE_IN <path-to-doxyfile>]
+#       [DOXYGEN_OUTPUT_DIR <output-dir>]
+#       [DOXYGEN_GENERATE_HTML <generate-html>]
+#       [DOXYGEN_GENERATE_LATEX <generate-latex>]
+#       [DOXYGEN_GENERATE_XML <generate-xml>]
+#       [DOXYGEN_QUIET <quiet>])
 #
-# Configures `Doxygen` for generating docs for a given target. If the setup
-# process succeeds then the cache variable `LOCO_${proj_name_upper}_HAS_DOXYGEN`
-# is set to `TRUE`; otherwise, it's set to `FALSE`. Notice that we're assumming
-# that the user provides us with a "proper" target (i.e. the include headers can
-# be extracted from the include dirs, set by `target_include_directories`).
+# Configures `Doxygen` for generating docs for a given target. Notice that we're
+# assumming that the user provides us with a "proper" target (i.e. the include
+# headers can be extracted from the include dirs, set by
+# `target_include_directories`).
 #
 # ~~~
-function(_loco_setup_doxygen target_handle)
+function(loco_setup_cppdocs_doxygen target_handle)
   # cmake-lint: disable=R0915
-  string(TOUPPER ${PROJECT_NAME} proj_name_upper)
-  set(cache_status_var LOCO_${proj_name_upper}_HAS_DOXYGEN)
 
   # -----------------------------------
   # Sanity check: we're expecting a target from the user
@@ -27,8 +26,6 @@ function(_loco_setup_doxygen target_handle)
     loco_message(
       "Expected a valid target, but got '${target_handle}', which is not :("
       LOG_LEVEL WARNING)
-    _cache_doxygen_setup_status(${cache_status_var} FALSE
-                                "User must provide a valid target :(")
     return()
   endif()
 
@@ -36,11 +33,9 @@ function(_loco_setup_doxygen target_handle)
   # Sanity check: Make sure we have Doxygen installed in our system
   find_package(Doxygen QUIET)
   if(NOT DOXYGEN_FOUND)
-    loco_message("Couldn't find 'Doxygen', which is required to generate the \"
-                  first pass of C/C++ docs generation" LOG_LEVEL ERROR)
-    _cache_doxygen_setup_status(
-      ${cache_status_var} FALSE
-      "Doxygen wasn't found while configuring the project '${PROJECT_NAME}'")
+    loco_message(
+      "Couldn't find 'Doxygen', which is required to generate C/C++ docs"
+      LOG_LEVEL ERROR)
     return()
   else()
     loco_message("Doxygen version='${DOXYGEN_VERSION}' found in your system :)"
@@ -67,9 +62,6 @@ function(_loco_setup_doxygen target_handle)
   else()
     loco_message("Given target doesn't provide include-directories info"
                  LOG_LEVEL WARNING)
-    _cache_doxygen_setup_status(
-      ${cache_status_var} FALSE
-      "Given target doesn't provide include-directories info")
     return()
   endif()
 
@@ -90,9 +82,6 @@ function(_loco_setup_doxygen target_handle)
      AND (NOT setup_DOXYGEN_GENERATE_LATEX)
      AND (NOT setup_DOXYGEN_GENERATE_XML))
     loco_message(
-      "At least one generated artifact should be enabled (html|latex|xml)")
-    _cache_doxygen_setup_status(
-      ${cache_status_var} FALSE
       "At least one generated artifact should be enabled (html|latex|xml)")
     return()
   endif()
@@ -115,9 +104,6 @@ function(_loco_setup_doxygen target_handle)
   if(num_header_files LESS 1)
     loco_message("It seems there are no header files (hpp) associated with the\"
                  given target '${target_handle}' :(" LOG_LEVEL WARNING)
-    _cache_doxygen_setup_status(
-      ${cache_status_var} FALSE
-      "No .hpp files were found associated with the provided target :(")
     return()
   endif()
 
@@ -156,19 +142,60 @@ function(_loco_setup_doxygen target_handle)
 
   loco_message("Successfully configured Doxygen docs generations for\
     artifacts ${doxygen_artifacts}")
-  _cache_doxygen_setup_status(
-    ${cache_status_var} TRUE "'Doxygen' successfully configured for \
-    docs-generation for target '${target_handle}'")
+  # Notify the caller that everyting went well during the configuration
+  set(LOCO_${PROJECT_NAME}_DOXYGEN
+      TRUE
+      PARENT_SCOPE)
 endfunction()
 
 # ~~~
-# _cache_doxygen_setup_status(<var_name> <var_value> <cache_message>)
+# loco_setup_cppdocs_sphinx(
+#       [SPHINX_INPUT_DIR <input-dir>]
+#       [SPHINX_OUTPUT_DIR <output-dir>])
 #
-# Sets a status variable with the given `var_name` in the internal global cache
-# with the given `var_value`, and corresponding `cache_message`
+# Configures `Sphinx` for generating docs for a given target
 # ~~~
-macro(_cache_doxygen_setup_status var_name var_value cache_message)
-  # cmake-format: off
-  set(${var_name} ${var_value} CACHE BOOL "${cache_message}" FORCE)
-  # cmake-format: on
-endmacro()
+function(loco_setup_cppdocs_sphinx target_handle)
+  # -----------------------------------
+  # Sanity check: Make sure we have Sphinx installed in our system
+  find_package(Sphinx QUIET)
+  if(NOT Sphinx_FOUND)
+    loco_message(
+      "Couldn't find 'Sphinx', which is required to generate the main docs"
+      LOG_LEVEL ERROR)
+    return()
+  else()
+    loco_message("Sphinx was successfully found in your system :)" LOG_LEVEL
+                 STATUS)
+  endif()
+
+  # -----------------------------------
+  set(one_value_args "SPHINX_INPUT_DIR" "SPHINX_OUTPUT_DIR")
+  cmake_parse_arguments(setup "" "${one_value_args}" "" ${ARGN})
+
+  # Notify the caller that everyting went well during the configuration
+  set(LOCO_${PROJECT_NAME}_SPHINX
+      TRUE
+      PARENT_SCOPE)
+endfunction()
+
+# ~~~
+# loco_setup_cppdocs(<target-handle>
+#       [DOXYGEN_FILE_IN <path-to-doxyfile>]
+#       [DOXYGEN_OUTPUT_DIR <output-dir>]
+#       [DOXYGEN_GENERATE_HTML <generate-html>]
+#       [DOXYGEN_GENERATE_LATEX <generate-latex>]
+#       [DOXYGEN_GENERATE_XML <generate-xml>]
+#       [DOXYGEN_QUIET <quiet>]
+#       [SPHINX_INPUT_DIR <sphinx-input-dir>]
+#       [SPHINX_OUTPUT_DIR <sphinx-output-dir>])
+#
+# Configures doxygen + sphinx + breathe to generate documentation for the
+# given `target-handle`. These docs would consists of separate user-generated
+# documentation using markdown (.md) or restructuredText (.rst), as well as the
+# auto-generated documentation extracted from the docstrings in the header files
+# associated with the given target (if any).
+# ~~~
+function(loco_setup_cppdocs target_handle)
+
+endfunction()
