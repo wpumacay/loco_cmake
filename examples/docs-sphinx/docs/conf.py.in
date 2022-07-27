@@ -52,4 +52,5 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-@SPHINX_BREATHE_PROJECT@
+@SPHINX_BREATHE_PROJECTS_DICT@
+@SPHINX_BREATHE_DEFAULT_PROJECT@

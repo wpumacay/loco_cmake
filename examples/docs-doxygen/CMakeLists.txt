@@ -29,7 +29,7 @@ loco_create_target(
 # Initialize the docs (using doxygen only)
 loco_setup_cppdocs_doxygen(ZooCpp
     DOXYGEN_FILE_IN ${CMAKE_SOURCE_DIR}/docs/Doxyfile.in
-    DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/
+    DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/Doxygen
     DOXYGEN_GENERATE_HTML TRUE
     DOXYGEN_GENERATE_LATEX TRUE
     DOXYGEN_GENERATE_XML TRUE

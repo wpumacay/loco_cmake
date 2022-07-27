@@ -27,7 +27,15 @@ loco_create_target(
 # cmake-format: off
 # -------------------------------------
 # Initialize the documentation (doxygen + sphinx + breathe)
-loco_setup_cppdocs_sphinx(ZooCpp
+loco_setup_cppdocs(ZooCpp
+    DOXYGEN_FILE_IN ${CMAKE_SOURCE_DIR}/docs/Doxyfile.in
+    DOXYGEN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/Doxygen
+    DOXYGEN_GENERATE_HTML FALSE
+    DOXYGEN_GENERATE_LATEX FALSE
+    DOXYGEN_GENERATE_XML TRUE
+    DOXYGEN_QUIET TRUE
     SPHINX_FILE_IN ${CMAKE_SOURCE_DIR}/docs/conf.py.in
-    SPHINX_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/Sphinx/)
+    SPHINX_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/Sphinx
+    SPHINX_BREATHE_PROJECT ZooCpp
+    SPHINX_DOXYGEN_XML_OUTDIR ${CMAKE_BINARY_DIR}/docs/Doxygen/xml)
 # cmake-format: on

@@ -10,7 +10,12 @@ Welcome to ZooCpp's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+=====================
+C++ API Documentation
+=====================
 
+.. doxygenclass:: zoo::Animal
+   :members:
 
 Indices and tables
 ==================
