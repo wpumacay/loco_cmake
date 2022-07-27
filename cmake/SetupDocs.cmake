@@ -70,7 +70,7 @@ function(loco_setup_cppdocs_doxygen target_handle)
   loco_validate_with_default(setup_DOXYGEN_FILE_IN
                              ${PROJECT_SOURCE_DIR}/docs/Doxyfile.in)
   loco_validate_with_default(setup_DOXYGEN_OUTPUT_DIR
-                             ${PROJECT_BINARY_DIR}/docs)
+                             ${PROJECT_BINARY_DIR}/docs/Doxygen)
   loco_validate_with_default(setup_DOXYGEN_GENERATE_HTML TRUE)
   loco_validate_with_default(setup_DOXYGEN_GENERATE_LATEX TRUE)
   loco_validate_with_default(setup_DOXYGEN_GENERATE_XML TRUE)
@@ -149,13 +149,24 @@ function(loco_setup_cppdocs_doxygen target_handle)
 endfunction()
 
 # ~~~
-# loco_setup_cppdocs_sphinx(
-#       [SPHINX_INPUT_DIR <input-dir>]
+# loco_setup_cppdocs_sphinx(<target-handle>
+#       [SPHINX_FILE_IN <input-dir>]
 #       [SPHINX_OUTPUT_DIR <output-dir>])
 #
-# Configures `Sphinx` for generating docs for a given target
+# Configures `Sphinx` for generating docs for a given target.
 # ~~~
 function(loco_setup_cppdocs_sphinx target_handle)
+  # cmake-lint: disable=R0915
+
+  # -----------------------------------
+  # Sanity check: we're expecting a target from the user
+  if(NOT TARGET ${target_handle})
+    loco_message(
+      "Expected a valid target, but got '${target_handle}', which is not :("
+      LOG_LEVEL WARNING)
+    return()
+  endif()
+
   # -----------------------------------
   # Sanity check: Make sure we have Sphinx installed in our system
   find_package(Sphinx QUIET)
@@ -170,9 +181,97 @@ function(loco_setup_cppdocs_sphinx target_handle)
   endif()
 
   # -----------------------------------
-  set(one_value_args "SPHINX_INPUT_DIR" "SPHINX_OUTPUT_DIR")
+  set(one_value_args
+      "SPHINX_FILE_IN" "SPHINX_OUTPUT_DIR" "SPHINX_COPYRIGHT" "SPHINX_AUTHOR"
+      "SPHINX_BREATHE_PROJECT" "SPHINX_DOXYGEN_XML_OUTDIR")
   cmake_parse_arguments(setup "" "${one_value_args}" "" ${ARGN})
 
+  # ------------------------------------
+  # Set some sensible defaults
+  loco_validate_with_default(setup_SPHINX_FILE_IN
+                             ${PROJECT_SOURCE_DIR}/docs/conf.py.in)
+  loco_validate_with_default(setup_SPHINX_OUTPUT_DIR
+                             ${PROJECT_BINARY_DIR}/docs/Sphinx)
+  loco_validate_with_default(setup_SPHINX_COPYRIGHT "2022, ${PROJECT_NAME}")
+  loco_validate_with_default(setup_SPHINX_AUTHOR "Anomymous")
+  loco_validate_with_default(setup_SPHINX_BREATHE_PROJECT "")
+  loco_validate_with_default(setup_SPHINX_DOXYGEN_XML_OUTDIR
+                             ${PROJECT_BINARY_DIR}/docs/Doxygen/xml)
+
+  # -----------------------------------
+  # These variables will be replaced in the conf.py.in file during configuration
+  set(SPHINX_PROJECT_NAME ${PROJECT_NAME})
+  set(SPHINX_PROJECT_COPYRIGHT ${setup_SPHINX_COPYRIGHT})
+  set(SPHINX_PROJECT_AUTHOR ${setup_SPHINX_AUTHOR})
+  set(SPHINX_PROJECT_VERSION ${PROJECT_VERSION})
+  # Use Breathe if there is any project requested by the user
+  if(setup_SPHINX_BREATHE_PROJECT)
+    loco_message("Configuring Sphinx for Doxygen integration via Breathe")
+    set(breathe_comment "#Breathe configuration")
+    set(breathe_variable "breathe_default_project")
+    set(breathe_value "\"${setup_SPHINX_BREATHE_PROJECT}\"")
+    set(SPHINX_BREATHE_EXTENSION "extensions.append('breathe')")
+    set(SPHINX_BREATHE_PROJECT
+        "${breathe_comment}\n${breathe_variable} = ${breathe_value}\n")
+  else()
+    # If not integrating with doxygen via breathe, then just dismiss the option
+    set(SPHINX_BREATHE_EXTENSION "")
+    set(SPHINX_BREATHE_PROJECT "")
+  endif()
+
+  # -----------------------------------
+  # Get where the sources are located (conf.py, index.rst, etc.). We are
+  # assumming that all these are in a single directory in /docs somewhere
+  get_filename_component(sphinx_source_dir ${setup_SPHINX_FILE_IN} DIRECTORY)
+
+  # -----------------------------------
+  set(sphinx_conffile_in ${setup_SPHINX_FILE_IN})
+  set(sphinx_conffile_out ${sphinx_source_dir}/conf.py)
+  set(sphinx_build_dir ${setup_SPHINX_OUTPUT_DIR})
+  set(sphinx_working_dir ${setup_SPHINX_OUTPUT_DIR})
+  set(sphinx_index_file ${sphinx_build_dir}/index.html)
+  # Create the output directory (just in case not created yet)
+  file(MAKE_DIRECTORY ${sphinx_build_dir})
+  # Replace variables in between @@ on the Doxyfile.in with the actual values
+  configure_file(${sphinx_conffile_in} ${sphinx_conffile_out} @ONLY)
+
+  # cmake-format: off
+  # -----------------------------------
+  # Handle Sphinx invocation to generate nicer-docs
+  if(NOT setup_SPHINX_BREATHE_PROJECT)
+    loco_message("Running Sphinx WITHOUT Breathe integration")
+    add_custom_command(
+      OUTPUT ${sphinx_index_file}
+      COMMAND
+        ${SPHINX_EXECUTABLE} -b html ${sphinx_source_dir} ${sphinx_build_dir}
+      WORKING_DIRECTORY ${sphinx_working_dir}
+      DEPENDS ${sphinx_source_dir}/index.rst
+      MAIN_DEPENDENCY ${sphinx_conffile_out}
+      COMMENT
+        "${PROJECT_NAME} >>> running docs-generation using Sphinx")
+  else()
+    loco_message("Running Sphinx WITH Breathe integration")
+    set(sphinx_doxygen_index_file ${setup_SPHINX_DOXYGEN_XML_OUTDIR}/index.xml)
+    add_custom_command(
+      OUTPUT ${sphinx_index_file}
+      COMMAND
+        ${SPHINX_EXECUTABLE} -b html
+        # Tell breathe where to find the Doxygen xml output
+        -Dbreathe_projects.${PROJECT_NAME}=${setup_SPHINX_DOXYGEN_XML_OUTDIR}
+        ${sphinx_source_dir} ${sphinx_build_dir}
+      WORKING_DIRECTORY ${sphinx_working_dir}
+      DEPENDS ${sphinx_source_dir}/index.rst ${sphinx_doxygen_index_file}
+      MAIN_DEPENDENCY ${sphinx_conffile_out}
+      COMMENT
+        "${PROJECT_NAME} >>> running docs-generation using Sphinx + Breathe")
+  endif()
+  # cmake-format: on
+  add_custom_target(
+    ${target_handle}DocsSphinx ALL
+    DEPENDS ${sphinx_index_file}
+    COMMENT "Constructing Sphinx docs-generation target")
+
+  loco_message("Successfully configured Sphinx docs generations")
   # Notify the caller that everyting went well during the configuration
   set(LOCO_${PROJECT_NAME}_SPHINX
       TRUE
@@ -187,7 +286,7 @@ endfunction()
 #       [DOXYGEN_GENERATE_LATEX <generate-latex>]
 #       [DOXYGEN_GENERATE_XML <generate-xml>]
 #       [DOXYGEN_QUIET <quiet>]
-#       [SPHINX_INPUT_DIR <sphinx-input-dir>]
+#       [SPHINX_FILE_IN <sphinx-input-dir>]
 #       [SPHINX_OUTPUT_DIR <sphinx-output-dir>])
 #
 # Configures doxygen + sphinx + breathe to generate documentation for the
@@ -197,5 +296,22 @@ endfunction()
 # associated with the given target (if any).
 # ~~~
 function(loco_setup_cppdocs target_handle)
+
+  set(one_value_args"DOXYGEN_FILE_IN"
+      "DOXYGEN_OUTPUT_DIR" "DOXYGEN_GENERATE_HTML" "DOXYGEN_GENERATE_LATEX"
+      "DOXYGEN_GENERATE_XML" "DOXYGEN_QUIET" "SPHINX_FILE_IN"
+      "SPHINX_OUTPUT_DIR")
+  cmake_parse_arguments(setup "" "${one_value_args}" "" ${ARGN})
+  # TODO(wilbert): Check if not-defined here are passed down as not-defined
+  # ------------------------------------
+  # Validate with some sensible defaults first, as might pass over not-defined
+  loco_validate_with_default(setup_DOXYGEN_FILE_IN
+                             ${PROJECT_SOURCE_DIR}/docs/Doxyfile.in)
+  loco_validate_with_default(setup_DOXYGEN_OUTPUT_DIR
+                             ${PROJECT_BINARY_DIR}/docs)
+  loco_validate_with_default(setup_DOXYGEN_GENERATE_HTML TRUE)
+  loco_validate_with_default(setup_DOXYGEN_GENERATE_LATEX TRUE)
+  loco_validate_with_default(setup_DOXYGEN_GENERATE_XML TRUE)
+  loco_validate_with_default(setup_DOXYGEN_QUIET TRUE)
 
 endfunction()

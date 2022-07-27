@@ -28,6 +28,6 @@ loco_create_target(
 # -------------------------------------
 # Initialize the documentation (doxygen + sphinx + breathe)
 loco_setup_cppdocs_sphinx(ZooCpp
-    SPHINX_INPUT_DIR ${CMAKE_SOURCE_DIR}/docs/
-    SPHINX_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/)
+    SPHINX_FILE_IN ${CMAKE_SOURCE_DIR}/docs/conf.py.in
+    SPHINX_OUTPUT_DIR ${CMAKE_BINARY_DIR}/docs/Sphinx/)
 # cmake-format: on
