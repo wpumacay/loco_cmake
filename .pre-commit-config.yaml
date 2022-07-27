@@ -41,3 +41,7 @@ repos:
     -   id: clang-tidy
     -   id: cpplint
     -   id: cppcheck
+        args: [--template=gcc, --std=c++11,
+               --enable=style,performance,warning,portability, --inline-suppr,
+               --suppress=internalAstError, --suppress=unmatchedSuppression,
+               --inconclusive]
