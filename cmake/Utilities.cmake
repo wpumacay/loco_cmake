@@ -50,7 +50,7 @@ endmacro()
 macro(loco_configure_git_dependency)
   set(options) # Not using options for this macro
   set(one_value_args TARGET REPO TAG BUILD_TYPE DISCARD_UNLESS)
-  set(multi_value_args BUILD_ARGS)
+  set(multi_value_args BUILD_ARGS DEPENDS_ON)
   cmake_parse_arguments(git_dep "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
 
@@ -101,7 +101,12 @@ macro(loco_configure_git_dependency)
 
     # ---------------------------------
     # Process the GIT repo (i.e. add_subdirectory)
-    FetchContent_MakeAvailable(${git_dep_TARGET})
+    if(git_dep_DEPENDS_ON)
+      FetchContent_MakeAvailable(${git_dep_TARGET} ${git_dep_DEPENDS_ON})
+    else()
+      FetchContent_MakeAvailable(${git_dep_TARGET})
+    endif()
+
   endif()
 endmacro()
 
