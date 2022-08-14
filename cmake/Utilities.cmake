@@ -111,6 +111,109 @@ macro(loco_configure_git_dependency)
 endmacro()
 
 # ~~~
+# loco_find_or_fetch_dependency(
+#       [USE_SYSTEM_PACKAGE <on|off>]
+#       [PACKAGE_NAME <name>]
+#       [LIBRARY_NAME <name>]
+#       [GIT_REPO <repo>]
+#       [GIT_TAG <tag|branch|commit-hash>]
+#       [TARGETS <targets>]
+#       [BUILD_ARGS <args>]
+#       [EXCLUDE_FROM_ALL])
+#
+# Finds the required dependency locally (via find_package) or fetchs it from its
+# main git repository (if applicable). Throws a FATAL_ERROR if none of the
+# options were possible to complete.
+#
+# ~~~
+macro(loco_find_or_fetch_dependency)
+  if(NOT FetchContent)
+    include(FetchContent)
+  endif()
+
+  set(options "EXCLUDE_FROM_ALL")
+  set(one_value_args "USE_SYSTEM_PACKAGE" "PACKAGE_NAME" "LIBRARY_NAME"
+                     "GIT_REPO" "GIT_TAG")
+  set(multi_value_args "TARGETS" "BUILD_ARGS")
+
+  cmake_parse_arguments(args "${options}" "${one_value_args}"
+                        "${multi_value_args}" ${ARGN})
+
+  # -----------------------------------
+  # Make sure the user provides the list of expected targets
+  if(NOT args_TARGETS)
+    loco_message("FindOrFetch: TARGETS must be specified" LOG_LEVEL FATAL_ERROR)
+  endif()
+
+  # -----------------------------------
+  # Check if we already have all targets requested. If so, we might be trying to
+  # add this package twice, so it's already loaded :)
+  set(targets_found TRUE)
+  message(CHECK_START
+          "FindOrFetch: checking for targets in package ${args_PACKAGE_NAME}")
+  foreach(target IN LISTS args_TARGETS)
+    if(NOT TARGET ${target})
+      message(CHECK_FAIL "target `${target}` not defined")
+      set(targets_found FALSE)
+      break()
+    endif()
+    message(CHECK_PASS "target `${target}` defined")
+  endforeach()
+
+  # -----------------------------------
+  # If required targets are not found, use either `find_package` or
+  # `FetchContent` to get them. Notice that we're assumming that the user knows
+  # which version of the package he wants, and has already installed it properly
+  # if he's using the USE_SYSTEM_PACKAGE option.
+  if(NOT targets_found)
+    if(${args_USE_SYSTEM_PACKAGE})
+      message(
+        CHECK_START
+        "FindOrFetch: finding `${args_PACKAGE_NAME}` in system packages...")
+      # Call find_package, and if fail, just let the user know that he has to
+      # either install the package it his system or use from-repo
+      find_package(${args_PACKAGE_NAME} REQUIRED)
+      message(CHECK_PASS "FindOrFetch: found `${args_PACKAGE_NAME}` in system")
+    else()
+      message(
+        CHECK_START
+        "FindOrFetch: using FetchContent to retrieve `${args_LIBRARY_NAME}`")
+      # cmake-format: off
+      FetchContent_Declare(
+        ${args_LIBRARY_NAME}
+        GIT_REPOSITORY ${args_GIT_REPO}
+        GIT_TAG ${args_GIT_TAG}
+        GIT_PROGRESS TRUE
+        GIT_SHALLOW FALSE
+        USES_TERMINAL_DOWNLOAD TRUE
+        CMAKE_ARGS ${BUILD_ARGS})
+      # cmake-format: on
+
+      if(${args_EXCLUDE_FROM_ALL})
+        FetchContent_GetProperties(${args_LIBRARY_NAME})
+        if(NOT ${${args_LIBRARY_NAME}_POPULATED})
+          FetchContent_Populate(${args_LIBRARY_NAME})
+          add_subdirectory(${${args_LIBRARY_NAME}_SOURCE_DIR}
+                           ${${args_LIBRARY_NAME}_BINARY_DIR} EXCLUDE_FROM_ALL)
+        endif()
+      else()
+        FetchContent_MakeAvailable(${args_LIBRARY_NAME})
+      endif()
+      message(CHECK_PASS "Done")
+    endif()
+    # Make sure we have the required targets defined
+    foreach(target IN LISTS args_TARGETS)
+      if(NOT TARGET ${target})
+        loco_message("Target ${target} is required, but wasn't setup" LOG_LEVEL
+                     WARNING)
+      endif()
+    endforeach()
+  else()
+    loco_message("Found" LOG_LEVEL CHECK_PASS)
+  endif()
+endmacro()
+
+# ~~~
 # loco_setup_clang_tidy(
 #     [CONFIG_FILE <config-file>]
 #     [FIX <fix>]
