@@ -125,6 +125,10 @@ endmacro()
 # main git repository (if applicable). Throws a FATAL_ERROR if none of the
 # options were possible to complete.
 #
+# Note
+# ----
+# There's is a restriction with LIBRARY_NAME. As it uses the FetchContent API
+# from CMake, it expects the name of the target to be **all lowercase**.
 # ~~~
 macro(loco_find_or_fetch_dependency)
   if(NOT FetchContent)
