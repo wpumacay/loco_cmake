@@ -191,7 +191,7 @@ macro(loco_find_or_fetch_dependency)
 
       if(${args_EXCLUDE_FROM_ALL})
         FetchContent_GetProperties(${args_LIBRARY_NAME})
-        if(NOT ${${args_LIBRARY_NAME}_POPULATED})
+        if(NOT ${args_LIBRARY_NAME}_POPULATED)
           FetchContent_Populate(${args_LIBRARY_NAME})
           add_subdirectory(${${args_LIBRARY_NAME}_SOURCE_DIR}
                            ${${args_LIBRARY_NAME}_BINARY_DIR} EXCLUDE_FROM_ALL)
