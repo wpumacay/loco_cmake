@@ -321,7 +321,6 @@ function(loco_setup_cppdocs target_handle)
       "SPHINX_BREATHE_PROJECT"
       "SPHINX_DOXYGEN_XML_OUTDIR")
   cmake_parse_arguments(setup "" "${one_value_args}" "" ${ARGN})
-  message("fooooo: ${setup_SPHINX_BREATHE_PROJECT}")
 
   # TODO(wilbert): Check if not-defined here are passed down as not-defined
   # ------------------------------------
