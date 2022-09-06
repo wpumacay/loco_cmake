@@ -119,6 +119,7 @@ endmacro()
 #       [GIT_TAG <tag|branch|commit-hash>]
 #       [TARGETS <targets>]
 #       [BUILD_ARGS <args>]
+#       [PATCH_COMMAND <commands>]
 #       [EXCLUDE_FROM_ALL])
 #
 # Finds the required dependency locally (via find_package) or fetchs it from its
@@ -138,7 +139,7 @@ macro(loco_find_or_fetch_dependency)
   set(options "EXCLUDE_FROM_ALL")
   set(one_value_args "USE_SYSTEM_PACKAGE" "PACKAGE_NAME" "LIBRARY_NAME"
                      "GIT_REPO" "GIT_TAG")
-  set(multi_value_args "TARGETS" "BUILD_ARGS")
+  set(multi_value_args "TARGETS" "BUILD_ARGS" "PATCH_COMMAND")
 
   cmake_parse_arguments(args "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
@@ -190,7 +191,8 @@ macro(loco_find_or_fetch_dependency)
         GIT_PROGRESS TRUE
         GIT_SHALLOW FALSE
         USES_TERMINAL_DOWNLOAD TRUE
-        CMAKE_ARGS ${BUILD_ARGS})
+        CMAKE_ARGS ${BUILD_ARGS}
+        PATCH_COMMAND ${args_PATCH_COMMAND})
       # cmake-format: on
 
       if(${args_EXCLUDE_FROM_ALL})

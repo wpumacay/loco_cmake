@@ -36,11 +36,20 @@ loco_find_or_fetch_dependency(
   USE_SYSTEM_PACKAGE ${FIND_USE_SYSTEM_PACKAGE}
   PACKAGE_NAME pybind11
   LIBRARY_NAME pybind11
-  GIT_REPO https://github.com/pybind/pybind11.git
-  GIT_TAG v2.10.0
+  GIT_REPO https://github.com/RobotLocomotion/pybind11.git
+  GIT_TAG drake
   TARGETS pybind11::headers
   BUILD_ARGS
     -DPYBIND11_TEST=OFF
+  PATCH_COMMAND
+    "${GIT_EXECUTABLE}"
+    "apply"
+    "-q"
+    "${PROJECT_SOURCE_DIR}/pybind11-fix-vs2022.patch"
+    "||"
+    "${CMAKE_COMMAND}"
+    "-E"
+    "true"
   EXCLUDE_FROM_ALL)
 
 loco_find_or_fetch_dependency(
@@ -77,7 +86,7 @@ loco_find_or_fetch_dependency(
 
 loco_find_or_fetch_dependency(
   USE_SYSTEM_PACKAGE FALSE
-  LIBRARY_NAME LocoUtils
+  LIBRARY_NAME loco_utils
   GIT_REPO https://github.com/wpumacay/loco_utils.git
   GIT_TAG dev
   TARGETS loco::utils
@@ -89,10 +98,10 @@ loco_find_or_fetch_dependency(
 
 loco_find_or_fetch_dependency(
   USE_SYSTEM_PACKAGE FALSE
-  LIBRARY_NAME LocoMath
+  LIBRARY_NAME loco_math
   GIT_REPO https://github.com/wpumacay/loco_math.git
   GIT_TAG dev
-  TARGETS loco::math
+  TARGETS loco::math loco::math_py_helpers
   BUILD_ARGS
     -DLOCOMATH_BUILD_PYTHON_BINDINGS=ON
     -DLOCOMATH_BUILD_EXAMPLES=OFF
