@@ -75,30 +75,31 @@ loco_find_or_fetch_dependency(
     -DASSIMP_INJECT_DEBUG_POSTFIX=OFF
   EXCLUDE_FROM_ALL)
 
-# loco_find_or_fetch_dependency(
-#   USE_SYSTEM_PACKAGE FALSE
-#   LIBRARY_NAME LocoUtils
-#   GIT_REPO https://github.com/wpumacay/loco_utils.git
-#   GIT_TAG dev
-#   TARGETS loco::utils
-#   BUILD_ARGS
-#     -DLOCOUTILS_BUILD_PYTHON_BINDINGS=ON
-#     -DLOCOUTILS_BUILD_EXAMPLES=OFF
-#     -DLOCOUTILS_BUILD_DOCS=OFF
-#   EXCLUDE_FROM_ALL)
-#
-# loco_find_or_fetch_dependency(
-#   USE_SYSTEM_PACKAGE FALSE
-#   LIBRARY_NAME LocoMath
-#   GIT_REPO https://github.com/wpumacay/loco_math.git
-#   GIT_TAG dev
-#   TARGETS loco::math
-#   BUILD_ARGS
-#     -DLOCOMATH_BUILD_PYTHON_BINDINGS=ON
-#     -DLOCOMATH_BUILD_EXAMPLES=OFF
-#     -DLOCOMATH_BUILD_TESTS=OFF
-#     -DLOCOMATH_BUILD_DOCS=OFF
-#   EXCLUDE_FROM_ALL)
+loco_find_or_fetch_dependency(
+  USE_SYSTEM_PACKAGE FALSE
+  LIBRARY_NAME LocoUtils
+  GIT_REPO https://github.com/wpumacay/loco_utils.git
+  GIT_TAG dev
+  TARGETS loco::utils
+  BUILD_ARGS
+    -DLOCOUTILS_BUILD_PYTHON_BINDINGS=ON
+    -DLOCOUTILS_BUILD_EXAMPLES=OFF
+    -DLOCOUTILS_BUILD_DOCS=OFF
+  EXCLUDE_FROM_ALL)
+
+loco_find_or_fetch_dependency(
+  USE_SYSTEM_PACKAGE FALSE
+  LIBRARY_NAME LocoMath
+  GIT_REPO https://github.com/wpumacay/loco_math.git
+  GIT_TAG dev
+  TARGETS loco::math
+  BUILD_ARGS
+    -DLOCOMATH_BUILD_PYTHON_BINDINGS=ON
+    -DLOCOMATH_BUILD_EXAMPLES=OFF
+    -DLOCOMATH_BUILD_TESTS=OFF
+    -DLOCOMATH_BUILD_DOCS=OFF
+  EXCLUDE_FROM_ALL)
+
 # cmake-format: on
 
 # -------------------------------------
