@@ -183,14 +183,19 @@ macro(loco_find_or_fetch_dependency)
       message(
         CHECK_START
         "FindOrFetch: using FetchContent to retrieve `${args_LIBRARY_NAME}`")
+      # Force FetchContent to show the progress of the git-clone command
+      # cmake-lint: disable=C0103
+      set(FETCHCONTENT_QUIET
+          FALSE
+          CACHE INTERNAL "Show git-progress" FORCE)
+
       # cmake-format: off
       FetchContent_Declare(
         ${args_LIBRARY_NAME}
         GIT_REPOSITORY ${args_GIT_REPO}
         GIT_TAG ${args_GIT_TAG}
         GIT_PROGRESS TRUE
-        GIT_SHALLOW FALSE
-        USES_TERMINAL_DOWNLOAD TRUE
+        GIT_SHALLOW TRUE
         CMAKE_ARGS ${BUILD_ARGS}
         PATCH_COMMAND ${args_PATCH_COMMAND})
       # cmake-format: on
