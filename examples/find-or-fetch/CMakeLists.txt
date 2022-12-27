@@ -12,12 +12,9 @@ project(ExampleFindOrFetch VERSION 1.0.0)
 # Initialize the project (bare-minimum setup)
 loco_initialize_project()
 
-option(FIND_USE_SYSTEM_PACKAGE
-       "Whether or not to give priority to system-wide package search" OFF)
-
 # cmake-format: off
 loco_find_or_fetch_dependency(
-  USE_SYSTEM_PACKAGE ${FIND_USE_SYSTEM_PACKAGE}
+  USE_SYSTEM_PACKAGE FALSE
   PACKAGE_NAME spdlog
   LIBRARY_NAME spdlog
   GIT_REPO https://github.com/gabime/spdlog.git
@@ -33,7 +30,7 @@ loco_find_or_fetch_dependency(
   EXCLUDE_FROM_ALL)
 
 loco_find_or_fetch_dependency(
-  USE_SYSTEM_PACKAGE ${FIND_USE_SYSTEM_PACKAGE}
+  USE_SYSTEM_PACKAGE FALSE
   PACKAGE_NAME pybind11
   LIBRARY_NAME pybind11
   GIT_REPO https://github.com/RobotLocomotion/pybind11.git
@@ -53,7 +50,7 @@ loco_find_or_fetch_dependency(
   EXCLUDE_FROM_ALL)
 
 loco_find_or_fetch_dependency(
-  USE_SYSTEM_PACKAGE ${FIND_USE_SYSTEM_PACKAGE}
+  USE_SYSTEM_PACKAGE FALSE
   PACKAGE_NAME Catch2
   LIBRARY_NAME catch2
   GIT_REPO https://github.com/catchorg/Catch2.git
@@ -66,7 +63,7 @@ loco_find_or_fetch_dependency(
   EXCLUDE_FROM_ALL)
 
 loco_find_or_fetch_dependency(
-  USE_SYSTEM_PACKAGE ${FIND_USE_SYSTEM_PACKAGE}
+  USE_SYSTEM_PACKAGE FALSE
   PACKAGE_NAME assimp
   LIBRARY_NAME assimp
   GIT_REPO https://github.com/assimp/assimp.git

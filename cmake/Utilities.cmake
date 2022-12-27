@@ -124,7 +124,12 @@ endmacro()
 #
 # Finds the required dependency locally (via find_package) or fetchs it from its
 # main git repository (if applicable). Throws a FATAL_ERROR if none of the
-# options were possible to complete.
+# options were possible to complete. Notice that USE_SYSTEM_PACKAGE will hint
+# for a search of what the installed package provides, but won't check for the
+# required targets, as these are not exported when installed. For example, the
+# package for MuJoCo exposes an imported target when installed, whereas the one
+# for Bullet only exposes some variables for the include directories and the
+# appropriate libraries to link to (no targets)
 #
 # Note
 # ----
@@ -212,13 +217,16 @@ macro(loco_find_or_fetch_dependency)
       endif()
       message(CHECK_PASS "Done")
     endif()
-    # Make sure we have the required targets defined
-    foreach(target IN LISTS args_TARGETS)
-      if(NOT TARGET ${target})
-        loco_message("Target ${target} is required, but wasn't setup" LOG_LEVEL
-                     WARNING)
-      endif()
-    endforeach()
+    # Make sure we have the required targets defined (only if not using system
+    # packages, as these tend not to expose targets, but variables instead)
+    if(NOT ${args_USE_SYSTEM_PACKAGE})
+      foreach(target IN LISTS args_TARGETS)
+        if(NOT TARGET ${target})
+          loco_message("Target ${target} is required, but wasn't setup"
+                       LOG_LEVEL WARNING)
+        endif()
+      endforeach()
+    endif()
   else()
     loco_message("Found" LOG_LEVEL CHECK_PASS)
   endif()
