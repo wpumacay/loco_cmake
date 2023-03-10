@@ -228,7 +228,8 @@ macro(loco_find_or_fetch_dependency)
       endforeach()
     endif()
   else()
-    loco_message("Found" LOG_LEVEL CHECK_PASS)
+    loco_message("Found all required targets for ${args_PACKAGE_NAME}"
+                 LOG_LEVEL STATUS)
   endif()
 endmacro()
 
