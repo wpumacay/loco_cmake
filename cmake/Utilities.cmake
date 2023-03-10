@@ -159,9 +159,9 @@ macro(loco_find_or_fetch_dependency)
   # Check if we already have all targets requested. If so, we might be trying to
   # add this package twice, so it's already loaded :)
   set(targets_found TRUE)
-  message(CHECK_START
-          "FindOrFetch: checking for targets in package ${args_PACKAGE_NAME}")
+  message("FindOrFetch: checking for targets in package ${args_PACKAGE_NAME}")
   foreach(target IN LISTS args_TARGETS)
+    message(CHECK_START "FindOrFetch: checking for target ${target}")
     if(NOT TARGET ${target})
       message(CHECK_FAIL "target `${target}` not defined")
       set(targets_found FALSE)
