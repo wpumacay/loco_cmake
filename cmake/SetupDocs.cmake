@@ -222,7 +222,7 @@ function(loco_setup_cppdocs_sphinx target_handle)
 
   # -----------------------------------
   # These variables will be replaced in the conf.py.in file during configuration
-  set(SPHINX_PROJECT_NAME ${PROJECT_NAME})
+  set(SPHINX_PROJECT_NAME ${target_handle})
   set(SPHINX_PROJECT_COPYRIGHT ${setup_SPHINX_COPYRIGHT})
   set(SPHINX_PROJECT_AUTHOR ${setup_SPHINX_AUTHOR})
   set(SPHINX_PROJECT_VERSION ${PROJECT_VERSION})
