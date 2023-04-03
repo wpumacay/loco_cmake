@@ -52,18 +52,47 @@ function(loco_setup_cppdocs_doxygen target_handle)
   # The user gave us a valid target :D. We'll get the include directory from the
   # target itself. Recall that we're assumming INCLUDE_DIRECTORIES is set via
   # `target_include_directories` when configuring the target :)
-  get_target_property(target_type ${target_handle} TYPE)
-  if(${target_type} MATCHES "LIBRARY")
-    get_target_property(target_include_dirs ${target_handle}
-                        INCLUDE_DIRECTORIES)
-  elseif(${target_type} MATCHES "INTERFACE_LIBRARY")
-    get_target_property(target_include_dirs ${target_handle}
-                        INTERFACE_INCLUDE_DIRECTORIES)
-  else()
-    loco_message("Given target doesn't provide include-directories info"
-                 LOG_LEVEL WARNING)
+  set(target_include_dirs "")
+  # Look for first option for the include directories of the target
+  get_target_property(target_INCLUDE_DIRECTORIES ${target_handle}
+                      INCLUDE_DIRECTORIES)
+  if(target_INCLUDE_DIRECTORIES)
+    list(APPEND target_include_dirs ${target_INCLUDE_DIRECTORIES})
+  endif()
+  # Look for the other option for the include directories of the target
+  get_target_property(target_INTERFACE_INCLUDE_DIRECTORIES ${target_handle}
+                      INTERFACE_INCLUDE_DIRECTORIES)
+  if(target_INTERFACE_INCLUDE_DIRECTORIES)
+    list(APPEND target_include_dirs ${target_INTERFACE_INCLUDE_DIRECTORIES})
+  endif()
+
+  # -----------------------------------
+  # Validate if we have at least some information of the include directories. We
+  # also have to make sure there are header files at these locations
+  set(validated_inc_dirs "")
+  set(validated_header_files "")
+  foreach(target_inc_dir IN LISTS target_include_dirs)
+    file(GLOB_RECURSE list_inc_files "${target_inc_dir}/*.hpp")
+    list(LENGTH list_inc_files num_inc_files)
+    if(num_inc_files GREATER 0)
+      list(APPEND validated_inc_dirs ${target_inc_dir})
+      list(APPEND validated_header_files ${list_inc_files})
+    endif()
+  endforeach()
+  list(LENGTH validated_inc_dirs num_valid_inc_dirs)
+  if(num_valid_inc_dirs LESS 1)
+    loco_message(
+      "It seems we either don't have any include directories, or we don't \
+      have header files at these locations. Warning generated while \
+      checking target '${target_handle}'" LOG_LEVEL WARNING)
     return()
   endif()
+
+  # -----------------------------------
+  # Doxygen expects files and directories to be space separated. We have CMake
+  # lists so far, which are ";" separated, so we'll replace these by spaces to
+  # make sure Doxygen doesn't complain about our paths
+  string(REPLACE ";" " " validated_inc_dirs_str "${validated_inc_dirs}")
 
   # ------------------------------------
   # Set some sensible defaults
@@ -88,24 +117,13 @@ function(loco_setup_cppdocs_doxygen target_handle)
 
   # -----------------------------------
   # These variables are later replaced in the Doxyfile.in (@@ placeholder refs)
-  set(DOXYGEN_PROJECT_NAME ${PROJECT_NAME})
-  set(DOXYGEN_INPUT_DIR "${target_include_dirs}")
+  set(DOXYGEN_PROJECT_NAME ${target_handle})
+  set(DOXYGEN_INPUT_DIR ${validated_inc_dirs_str})
   set(DOXYGEN_OUTPUT_DIR ${setup_DOXYGEN_OUTPUT_DIR})
   set(DOXYGEN_GENERATE_HTML ${setup_DOXYGEN_GENERATE_HTML})
   set(DOXYGEN_GENERATE_LATEX ${setup_DOXYGEN_GENERATE_LATEX})
   set(DOXYGEN_GENERATE_XML ${setup_DOXYGEN_GENERATE_XML})
   set(DOXYGEN_QUIET ${setup_DOXYGEN_QUIET})
-
-  # -----------------------------------
-  # Grab all header files whose docs we will generate
-  file(GLOB_RECURSE doxygen_header_files "${DOXYGEN_INPUT_DIR}/*.hpp")
-  # Sanity check: should have at least one file to get docs from
-  list(LENGTH doxygen_header_files num_header_files)
-  if(num_header_files LESS 1)
-    loco_message("It seems there are no header files (hpp) associated with the\"
-                 given target '${target_handle}' :(" LOG_LEVEL WARNING)
-    return()
-  endif()
 
   # -----------------------------------
   set(doxyfile_in ${setup_DOXYGEN_FILE_IN})
@@ -131,7 +149,7 @@ function(loco_setup_cppdocs_doxygen target_handle)
   # Handle Doxygen invocation to generate XML-docs
   add_custom_command(
     OUTPUT ${doxygen_artifacts}
-    DEPENDS ${doxygen_header_files}
+    DEPENDS ${validated_header_files}
     COMMAND ${DOXYGEN_EXECUTABLE} ${doxyfile_out}
     MAIN_DEPENDENCY ${doxyfile_out} ${doxyfile_in}
     COMMENT "Configuring docs-generation using 'Doxygen...'")

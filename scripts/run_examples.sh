@@ -38,7 +38,7 @@ script_path="$(readlink -f ${BASH_SOURCE})"
 scripts_dir="$(dirname -- ${script_path})"
 root_dir="$(dirname -- ${scripts_dir})"
 examples_dir="${root_dir}/examples"
-ex_names=("project" "simd" "target" "utils")
+ex_names=("project" "simd" "target" "utils" "docs-doxygen" "docs-sphinx")
 
 build_all_examples() {
     for example_name in ${ex_names[@]}; do
