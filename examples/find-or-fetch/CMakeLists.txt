@@ -19,6 +19,7 @@ loco_find_or_fetch_dependency(
   LIBRARY_NAME spdlog
   GIT_REPO https://github.com/gabime/spdlog.git
   GIT_TAG v1.9.2
+  GIT_PROGRESS FALSE
   TARGETS spdlog::spdlog
   BUILD_ARGS
     -DSPDLOG_BUILD_SHARED=OFF
@@ -35,6 +36,7 @@ loco_find_or_fetch_dependency(
   LIBRARY_NAME pybind11
   GIT_REPO https://github.com/RobotLocomotion/pybind11.git
   GIT_TAG drake
+  GIT_PROGRESS FALSE
   TARGETS pybind11::headers
   BUILD_ARGS
     -DPYBIND11_TEST=OFF
@@ -55,6 +57,7 @@ loco_find_or_fetch_dependency(
   LIBRARY_NAME catch2
   GIT_REPO https://github.com/catchorg/Catch2.git
   GIT_TAG v2.x
+  GIT_PROGRESS FALSE
   TARGETS Catch2::Catch2
   BUILD_ARGS
     -DCATCH_INSTALL_DOCS=OFF
@@ -68,6 +71,7 @@ loco_find_or_fetch_dependency(
   LIBRARY_NAME assimp
   GIT_REPO https://github.com/assimp/assimp.git
   GIT_TAG master
+  GIT_PROGRESS FALSE
   TARGETS assimp::assimp
   BUILD_ARGS
     -DBUILD_SHARED_LIBS=OFF
@@ -86,6 +90,7 @@ loco_find_or_fetch_dependency(
   LIBRARY_NAME loco_utils
   GIT_REPO https://github.com/wpumacay/loco_utils.git
   GIT_TAG dev
+  GIT_PROGRESS FALSE
   TARGETS loco::utils
   BUILD_ARGS
     -DLOCOUTILS_BUILD_PYTHON_BINDINGS=ON
@@ -98,6 +103,7 @@ loco_find_or_fetch_dependency(
   LIBRARY_NAME loco_math
   GIT_REPO https://github.com/wpumacay/loco_math.git
   GIT_TAG dev
+  GIT_PROGRESS FALSE
   TARGETS loco::math loco::math_py_helpers
   BUILD_ARGS
     -DLOCOMATH_BUILD_PYTHON_BINDINGS=ON

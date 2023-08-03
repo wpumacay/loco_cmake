@@ -143,11 +143,14 @@ macro(loco_find_or_fetch_dependency)
 
   set(options "EXCLUDE_FROM_ALL")
   set(one_value_args "USE_SYSTEM_PACKAGE" "PACKAGE_NAME" "LIBRARY_NAME"
-                     "GIT_REPO" "GIT_TAG")
+                     "GIT_REPO" "GIT_TAG" "GIT_PROGRESS")
   set(multi_value_args "TARGETS" "BUILD_ARGS" "PATCH_COMMAND")
 
   cmake_parse_arguments(args "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
+
+  # By default show the progress of the clone stage
+  loco_validate_with_default(args_GIT_PROGRESS TRUE)
 
   # -----------------------------------
   # Make sure the user provides the list of expected targets
@@ -199,7 +202,7 @@ macro(loco_find_or_fetch_dependency)
         ${args_LIBRARY_NAME}
         GIT_REPOSITORY ${args_GIT_REPO}
         GIT_TAG ${args_GIT_TAG}
-        GIT_PROGRESS TRUE
+        GIT_PROGRESS ${args_GIT_PROGRESS}
         GIT_SHALLOW TRUE
         CMAKE_ARGS ${BUILD_ARGS}
         PATCH_COMMAND ${args_PATCH_COMMAND})
