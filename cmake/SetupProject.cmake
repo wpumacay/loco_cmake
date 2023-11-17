@@ -77,6 +77,8 @@ function(loco_initialize_project)
     endif()
 
     # Make sure we keep ourselves to the standard selected (e.g. c++11)
+    set(CMAKE_C_EXTENSIONS OFF CACHE BOOL
+          "Build using no C extensions. Keep to the given standard" FORCE)
     set(CMAKE_CXX_EXTENSIONS OFF CACHE BOOL
             "Build using no CXX extensions. Keep to the given standard" FORCE)
 
