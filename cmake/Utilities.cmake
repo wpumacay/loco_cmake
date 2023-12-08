@@ -40,8 +40,7 @@ endmacro()
 #     [REPO] <git-repo>
 #     [TAG] <tag|branch|commit-hash>
 #     [BUILD_TYPE <build-type>]
-#     [DISCARD_UNLESS <discard_flag>]
-#     [BUILD_ARGS <extra-args>...])
+#     [DISCARD_UNLESS <discard_flag>])
 #
 # Fetches and configures a dependency from a given GIT repository. This assumes
 # that the given project uses CMake as build system generator (i.e. has a root
@@ -50,7 +49,7 @@ endmacro()
 macro(loco_configure_git_dependency)
   set(options) # Not using options for this macro
   set(one_value_args TARGET REPO TAG BUILD_TYPE DISCARD_UNLESS)
-  set(multi_value_args BUILD_ARGS DEPENDS_ON)
+  set(multi_value_args DEPENDS_ON)
   cmake_parse_arguments(git_dep "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
 
@@ -85,17 +84,6 @@ macro(loco_configure_git_dependency)
           BINARY_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/build"
           STAMP_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/stamp"
           TMP_DIR "${CMAKE_BINARY_DIR}/third_party/${git_dep_TARGET}/tmp"
-          CMAKE_ARGS -DCMAKE_BUILD_TYPE=${git_dep_BUILD_TYPE}
-                     -DCMAKE_GENERATOR=${CMAKE_GENERATOR}
-                     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                     -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-                     -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
-                     -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
-                     -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
-                     -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
-                     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-                     ${git_dep_BUILD_ARGS}
           BUILD_ALWAYS OFF)
     # cmake-format: on
 
@@ -118,7 +106,6 @@ endmacro()
 #       [GIT_REPO <repo>]
 #       [GIT_TAG <tag|branch|commit-hash>]
 #       [TARGETS <targets>]
-#       [BUILD_ARGS <args>]
 #       [PATCH_COMMAND <commands>]
 #       [EXCLUDE_FROM_ALL])
 #
@@ -144,7 +131,7 @@ macro(loco_find_or_fetch_dependency)
   set(options "EXCLUDE_FROM_ALL")
   set(one_value_args "USE_SYSTEM_PACKAGE" "PACKAGE_NAME" "LIBRARY_NAME"
                      "GIT_REPO" "GIT_TAG" "GIT_PROGRESS" "GIT_SHALLOW")
-  set(multi_value_args "TARGETS" "BUILD_ARGS" "PATCH_COMMAND")
+  set(multi_value_args "TARGETS" "PATCH_COMMAND")
 
   cmake_parse_arguments(args "${options}" "${one_value_args}"
                         "${multi_value_args}" ${ARGN})
@@ -205,7 +192,6 @@ macro(loco_find_or_fetch_dependency)
         GIT_TAG ${args_GIT_TAG}
         GIT_PROGRESS ${args_GIT_PROGRESS}
         GIT_SHALLOW ${args_GIT_SHALLOW}
-        CMAKE_ARGS ${BUILD_ARGS}
         PATCH_COMMAND ${args_PATCH_COMMAND})
       # cmake-format: on
 
